@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+*.swp
+.DS_Store
+
+# OS
+Thumbs.db
+
+# Claude Code – personal overrides (team defaults live in .claude/settings.json)
+.claude/settings.local.json
+.claude/.credentials.json
+
+# Large binaries / build artifacts
+*.log
+build/
+dist/

@@ -1,0 +1,3 @@
+[submodule "NewWandB"]
+	path = src/NewWandB
+	url = git@github.com:OgLocGreen/NewWandB.git

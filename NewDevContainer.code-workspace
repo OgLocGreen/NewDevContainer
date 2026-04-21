@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.colorCustomizations": {
+			"activityBar.background": "#51abff",
+			"activityBar.activeBorder": "#ff0202",
+			"activityBar.inactiveForeground": "#db3737"
+		},
+		"python.defaultInterpreterPath": "/app/venv/bin/python"
+	}
+	
+}

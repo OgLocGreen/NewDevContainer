@@ -1,0 +1,42 @@
+{
+  "python.defaultInterpreterPath": "/app/venv/bin/python",
+  "python.analysis.typeCheckingMode": "basic",
+  "editor.formatOnSave": true,
+  "editor.rulers": [
+    100
+  ],
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": true,
+    "python": true,
+    "yaml": true,
+    "dockerfile": true
+  },
+  "github.copilot.editor.enableAutoCompletions": true,
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": "docs/help/Templates/CodingRules.md"
+    },
+    {
+      "file": ".github/copilot-instructions.md"
+    },
+    {
+      "file": "docs/cpp_referenz/cpp_referzenz_1.md"
+    }
+  ],
+  "github.copilot.chat.reviewSelection.instructions": [
+    {
+      "file": "docs/help/Templates/CodingRules.md"
+    },
+    {
+      "file": "docs/cpp_referenz/cpp_referzenz_1.md"
+    }
+  ],
+  "[python]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
+  }
+}
