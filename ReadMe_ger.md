@@ -1,4 +1,4 @@
-# NewSpace Development Template
+# NewDevContainer Development Template
 
 ## Übersicht
 Diese Vorlage bietet eine standardisierte Entwicklungsumgebung für Python-Projekte mit DevContainers, Docker und Docker Compose. Die Umgebung ist so konfiguriert, dass sie sofort einsatzbereit ist, unabhängig vom Host-Betriebssystem.
@@ -274,7 +274,7 @@ Falls du keine NVIDIA-GPU hast, kommentiere folgende Bereiche in
 
       "#runtime: nvidia # NVIDIA-GPU verwenden"
       "#command: >"
-      "# bash -c '/app/newspace/.devcontainer/setup_startup.sh && bash'"
+      "# bash -c '/app/new_dev_container/.devcontainer/setup_startup.sh && bash'"
       "#deploy:"
       "# resources:"
       "# reservations:"

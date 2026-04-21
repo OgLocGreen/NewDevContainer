@@ -1,18 +1,18 @@
-# NewSpace – Project Guide for Claude Code
+# NewDevContainer – Project Guide for Claude Code
 
 This file gives Claude Code (and any AI pair programmer) the context it needs to
 be useful in this repository. Keep it short and factual.
 
 ## Project Summary
 
-NewSpace is a **development template** for Python projects. It ships a
+NewDevContainer is a **development template** for Python projects. It ships a
 preconfigured Dev Container (CUDA 12.6 + Python 3.12) so a new contributor can
 clone the repo and start coding without local setup.
 
 ## Repository Layout
 
 ```
-NewSpace/
+NewDevContainer/
 ├── .claude/             # Claude Code team defaults (settings, commands, skills)
 │   └── skills/
 │       └── package-docs/  # Loads docs/package_a|b on demand
