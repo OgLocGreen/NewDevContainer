@@ -18,6 +18,68 @@ Template collection for a structured workflow between Claude and Obsidian. Asymm
 
 Evolved from the former `Prompt_Engineering` project. Dr. prompts remain included as a bonus — orthogonal to the research workflow, intended as templates for students and colleagues.
 
+## Workflow
+
+How Claude_Research_Template operates at runtime:
+
+```
+                  ┌──────────────────────────────────┐
+                  │   CHAT  =  Working Directory     │
+                  │   ephemeral · brainstorm · try   │
+                  └─┬──────────────────────────────┬─┘
+                    │                              │
+               READ │                              │ WRITE
+       auto-pull or │                              │ /push only
+          /pull*    │                              │ (5-step ritual)
+                    ▼                              ▼
+                  ┌──────────────────────────────────┐
+                  │   VAULT  =  Repository           │
+                  │   persistent · single source     │
+                  │                                  │
+                  │   _PROJECT.md    status, TODOs   │
+                  │   _PLAN.md       roadmap         │
+                  │   _DECISIONS.md  decisions log   │
+                  │   Scratch/       half-thoughts   │
+                  └─────────────┬────────────────────┘
+                                │  MCP servers
+                       ┌────────┴────────┐
+                       ▼                 ▼
+                 ┌──────────┐      ┌──────────┐
+                 │ Obsidian │◄────►│  Zotero  │
+                 │  (notes) │ /sync│ (biblio) │
+                 └──────────┘      └──────────┘
+
+  Background runtime:
+    • Drift check    every 3-4 substantive exchanges (chat ↔ vault)
+    • "Lade Dr. X"   loads role-based prompt for current session
+    • Old chats      remain searchable; cherry-pick into new /push
+```
+
+### Session lifecycle
+
+```
+   start
+     │
+     ▼
+   first substantive Q ──► auto-pull of relevant meta-files
+     │
+     ▼
+   discuss · explore · decide  ◄── drift check (periodic)
+     │
+     │   use /pull, /pull_path, /pull_keyword, /pull_subproject
+     │   for targeted reads · /where for status synthesis
+     │
+     ▼
+   /push  ──►  1. recap session
+                2. diff plan (which files change, how)
+                3. clarify ambiguous points
+                4. write   (per-file confirmation)
+                5. starter prompt for next chat
+     │
+     ▼
+   end (vault updated · chat archived as history)
+```
+
 ## TODO
 
 - [ ] Test in this session: behave per new System Prompt, gather feedback
