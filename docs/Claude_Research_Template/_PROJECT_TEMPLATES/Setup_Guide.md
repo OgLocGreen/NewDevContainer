@@ -6,6 +6,24 @@
 
 ---
 
+## Contents
+
+- [What this setup gives you](#what-this-setup-gives-you)
+- [Mental model](#mental-model)
+- [Prerequisites](#prerequisites)
+- [Step 1: Vault structure](#step-1-vault-structure)
+- [Step 2: Install MCP connectors](#step-2-install-mcp-connectors-obsidian--zotero)
+- [Step 3: Set up a new flat project](#step-3-set-up-a-new-flat-project)
+- [Step 4: Set up a hierarchical project](#step-4-set-up-a-hierarchical-project-parent--subprojects)
+- [Step 5: How Claude behaves in a session](#step-5-how-claude-behaves-in-a-session)
+- [Step 6: Cherry-picking from old chats](#step-6-cherry-picking-from-old-chats)
+- [Step 7: Dr. prompts (optional)](#step-7-dr-prompts-optional)
+- [Step 8: Memory edits](#step-8-memory-edits)
+- [Command quick reference](#command-quick-reference)
+- [FAQ](#faq)
+
+---
+
 ## What this setup gives you
 
 - Claude has direct read/write access to your Obsidian vault and your Zotero library via MCP servers.
@@ -81,43 +99,16 @@ VaultRoot/
 
 ## Step 2: Install MCP connectors (Obsidian + Zotero)
 
-For Claude Desktop (or claude.ai with MCP support) to read and write your Obsidian vault and your Zotero library, two MCP (Model Context Protocol) servers must be installed and registered with Claude. The exact procedure depends on your operating system, but the conceptual flow is the same on all platforms:
+Claude needs two MCP servers to read and write your vault and bibliography. Installation is platform-specific — follow the guide for your system, then return here.
 
-1. **Obsidian + Local REST API plugin** — Obsidian itself doesn't expose a network interface; the Local REST API community plugin opens a localhost endpoint that the MCP server talks to. You need an API key from the plugin settings.
-2. **Zotero with API access enabled** — Zotero exposes a localhost API when "Allow other applications" is enabled in `Settings → Advanced`.
-3. **Two MCP servers** — `obsidian-mcp-server` (Node.js) and `zotero-mcp` (Python). They're the bridge between Claude and the two applications above.
-4. **Claude Desktop config** — register both servers in `claude_desktop_config.json` so Claude knows how to launch them.
+| Platform                                  | Guide                                                                                                                 |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Windows (PowerShell, Claude Desktop MSIX) | [[Setup_Connectors_Windows]] — verified 2026-05-07                                                                    |
+| macOS / Linux                             | No dedicated guide yet — see [[Setup_Connectors_Windows#9-other-platforms-macos--linux]] for hints and upstream links |
 
-### Detailed step-by-step instructions
+> **Note:** MCP server installation procedures change with each major release. If commands fail, check the upstream repos linked in the platform guide.
 
-**Windows / PowerShell / Claude Desktop MSIX:**
-→ See [[Setup_Connectors_Windows]] for the verified Windows guide (verified 2026-05-04).
-
-**For other platforms (macOS / Linux):**
-The conceptual flow above applies, but exact commands differ:
-- Use the platform's package manager for Node.js and Python (e.g. `brew install node python`, `apt install nodejs python3`)
-- Claude Desktop config path differs: `~/Library/Application Support/Claude/` on macOS, `~/.config/Claude/` on Linux
-- No PowerShell ExecutionPolicy step needed
-- See the official documentation:
-  - Obsidian Local REST API: https://github.com/coddingtonbear/obsidian-local-rest-api
-  - obsidian-mcp-server: https://github.com/cyanheads/obsidian-mcp-server
-  - zotero-mcp: https://github.com/54yyyu/zotero-mcp
-
-A platform-specific guide for macOS/Linux is not currently included — contributions welcome.
-
-### Note on staleness
-
-MCP server installation procedures change with each major release. The Windows guide is dated and verified for that date; if commands fail, check the upstream repos linked above.
-
-### Verification
-
-After config and Claude restart, both servers should appear as "connected" in `Settings → Developer → MCP Servers`. Test in a new chat:
-- Obsidian: ask Claude to list the top-level folders of your vault
-- Zotero: ask Claude to show the last few items in your library
-
-If anything fails, see the troubleshooting table in [[Setup_Connectors_Windows#7 Troubleshooting]].
-
-After successful setup: log the configuration as a decision in your project's `_DECISIONS.md` (which MCP servers, which versions, date).
+When done: both servers should appear as **connected** in Claude Desktop `Settings → Developer → MCP Servers`.
 
 ---
 
@@ -178,12 +169,12 @@ Talk freely. Claude does not write to the vault during normal conversation. Hypo
 
 When auto-pull isn't enough — for example if you want to load specific material or search across files:
 
-| Command | What it does |
-|---------|--------------|
-| `/pull` | Complete refresh: parent meta-files plus all active subproject meta-files |
-| `/pull_path <path>` | Targeted file or folder. Path absolute or relative to project. Ambiguous filenames trigger a "which one?" prompt |
-| `/pull_keyword <term>` | Full-text search in current project, returns ranked snippets, then asks which files to read fully |
-| `/pull_subproject <name>` | All meta-files of a subproject. For flat projects: error message + suggestion to use `/where` |
+| Command                   | What it does                                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `/pull`                   | Complete refresh: parent meta-files plus all active subproject meta-files                                        |
+| `/pull_path <path>`       | Targeted file or folder. Path absolute or relative to project. Ambiguous filenames trigger a "which one?" prompt |
+| `/pull_keyword <term>`    | Full-text search in current project, returns ranked snippets, then asks which files to read fully                |
+| `/pull_subproject <name>` | All meta-files of a subproject. For flat projects: error message + suggestion to use `/where`                    |
 
 These commands are non-blocking — you can ask follow-up questions immediately.
 
@@ -240,12 +231,12 @@ This keeps the vault as the long-term source of truth, while old chats remain se
 
 Specialized role-based prompts in the `Prompts/` folder:
 
-| Trigger in chat                           | File           | Purpose |
-|-------------------------------------------|----------------|---------|
-| `Lade Dr. Analyse` / `Load Dr. Analyse`   | Dr_Analyse.md  | Psychological text and email analysis |
-| `Lade Dr. Mail` / `Load Dr. Mail`         | Dr_Mail.md     | Formal email optimization |
+| Trigger in chat                           | File           | Purpose                                      |
+| ----------------------------------------- | -------------- | -------------------------------------------- |
+| `Lade Dr. Analyse` / `Load Dr. Analyse`   | Dr_Analyse.md  | Psychological text and email analysis        |
+| `Lade Dr. Mail` / `Load Dr. Mail`         | Dr_Mail.md     | Formal email optimization                    |
 | `Lade Dr. EveryDay` / `Load Dr. EveryDay` | Dr_EveryDay.md | Everyday questions, technology, organization |
-| `Lade Dr. Code` / `Load Dr. Code`         | Dr_Code.md     | Programming, debugging, architecture |
+| `Lade Dr. Code` / `Load Dr. Code`         | Dr_Code.md     | Programming, debugging, architecture         |
 
 **Usage:** type `Lade Dr. Code` (or `Load Dr. Code`) in chat — Claude reads the prompt from the vault and adopts its rules for the session.
 

@@ -7,7 +7,23 @@
 **Target system:** Windows, PowerShell, Claude Desktop MSIX
 **Example vault path used in this guide:** `C:\Users\ogloc\Desktop\OgLocGreenSpace\docs\oglocgreen_obsidian` — replace with your own.
 
-This guide is platform-specific. For the conceptual overview that applies to all platforms, see [[Setup_Guide#Step 2: Install MCP connectors]].
+For the full workflow guide (sessions, `/push`, Dr. prompts, etc.), see [[Setup_Guide]].
+For other platforms, see [Section 9](#9-other-platforms-macos--linux).
+
+---
+
+## Contents
+
+- [0. Choose a variant](#0-choose-a-variant)
+- [1. Prerequisites](#1-prerequisites-both-variants)
+- [2. Set up Zotero](#2-set-up-zotero-both-variants)
+- [3. Variant A — Filesystem MCP (default)](#3-variant-a--filesystem-mcp-default-currently-active)
+- [4. Variant B — Local REST API (alternative)](#4-variant-b--local-rest-api-alternative)
+- [5. Configure Claude Desktop](#5-configure-claude-desktop-both-variants)
+- [6. Verification](#6-verification)
+- [7. Troubleshooting](#7-troubleshooting)
+- [8. Maintenance](#8-maintenance)
+- [9. Other platforms (macOS / Linux)](#9-other-platforms-macos--linux)
 
 ---
 
@@ -362,3 +378,25 @@ zotero-mcp update-db --force-rebuild
 # Rebuild with full-text indexing (slower, more thorough)
 zotero-mcp update-db --fulltext --force-rebuild
 ```
+
+---
+
+## 9. Other platforms (macOS / Linux)
+
+No dedicated guide exists yet. The setup flow is the same as on Windows — install Node.js and Python, install the two MCP servers, register them in the Claude Desktop config — but the details differ:
+
+| Aspect                     | macOS                                                             | Linux                                               |
+| -------------------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
+| Node.js / Python install   | `brew install node python`                                        | `apt install nodejs python3` (or distro equivalent) |
+| Claude Desktop config path | `~/Library/Application Support/Claude/claude_desktop_config.json` | `~/.config/Claude/claude_desktop_config.json`       |
+| ExecutionPolicy step       | not needed                                                        | not needed                                          |
+| Zotero MCP executable      | `~/.local/bin/zotero-mcp` (typical)                               | `~/.local/bin/zotero-mcp` (typical)                 |
+
+**Upstream documentation:**
+- Obsidian Local REST API plugin: https://github.com/coddingtonbear/obsidian-local-rest-api
+- obsidian-mcp-server (cyanheads): https://github.com/cyanheads/obsidian-mcp-server
+- zotero-mcp-server (54yyyu): https://github.com/54yyyu/zotero-mcp
+
+The config JSON format (Sections 3.2 and 4.4) is identical across platforms — only paths and the config file location differ. The package-name trap (Section 2.3) and the `env` block requirement apply on all platforms.
+
+A contributions welcome — create `Setup_Connectors_macOS.md` or `Setup_Connectors_Linux.md` following the structure of this file.
