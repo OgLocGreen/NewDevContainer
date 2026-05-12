@@ -1,11 +1,15 @@
-# Setup: Obsidian + Zotero MCP for Claude Desktop (Windows)
+﻿# Setup: Obsidian + Zotero MCP for Claude Desktop (Windows)
 
 > Step-by-step guide for setting up the MCP servers for Obsidian and Zotero on Windows with Claude Desktop (MSIX / Store version).
-> **Verified:** 2026-05-07. **Restructured:** 2026-05-07 — Filesystem MCP is Variant A (default, currently active), Local REST API is Variant B (alternative for advanced Obsidian features). See `_DECISIONS.md`.
-> **2026-05-07 fix:** corrected Zotero PyPI package name (`zotero-mcp-server`, not `zotero-mcp` — there are two different projects on PyPI with similar names) and added the required `env` block with `ZOTERO_LOCAL=true`. Without this fix the server starts but cannot reach the local Zotero API.
+>
+> **Verified:** 2026-05-12
+>
+> **Obsidian variants:** Filesystem MCP (Variant A, default) vs. Local REST API (Variant B, advanced). See `_DECISIONS.md` for the active choice.
+>
+> **Zotero package-name note:** the correct PyPI package is `zotero-mcp-server` (by 54yyyu), **not** `zotero-mcp`. Both exist on PyPI and both ship a CLI called `zotero-mcp` — installing the wrong one causes silent failures. The required `env` block (including `ZOTERO_LOCAL=true`) is documented in Sections 3.2 and 4.4.
 
 **Target system:** Windows, PowerShell, Claude Desktop MSIX
-**Example vault path used in this guide:** `C:\Users\ogloc\Desktop\OgLocGreenSpace\docs\oglocgreen_obsidian` — replace with your own.
+**Example paths in this guide:** replace `YOUR_USERNAME` and `YOUR_VAULT_PATH` with your actual values.
 
 For the full workflow guide (sessions, `/push`, Dr. prompts, etc.), see [[Setup_Guide]].
 For other platforms, see [Section 9](#9-other-platforms-macos--linux).
@@ -31,7 +35,7 @@ For other platforms, see [Section 9](#9-other-platforms-macos--linux).
 
 |                              | Variant A: Filesystem MCP | Variant B: Local REST API |
 | ---------------------------- | ------------------------- | ------------------------- |
-| Status                       | **Currently active**      | Alternative               |
+| Status                       | **Default (recommended)** | Alternative               |
 | Local REST API plugin needed | no                        | yes                       |
 | Obsidian must be running     | no                        | yes                       |
 | Read/write/search files      | yes                       | yes                       |
@@ -42,7 +46,7 @@ For other platforms, see [Section 9](#9-other-platforms-macos--linux).
 
 **Recommendation:** Variant A is sufficient for projects following the `_PROJECT.md` / `_DECISIONS.md` / `_PLAN.md` convention. Switch to Variant B if you need Dataview output, plugin state, or resolved backlinks.
 
-The decision currently in effect is logged in `_DECISIONS.md`.
+Record the active choice in `_DECISIONS.md`.
 
 ---
 
@@ -79,11 +83,11 @@ Expected: 3.10 or newer. If not present:
 winget install Python.Python.3.12
 ```
 
-Note: Python 3.14 is very recent. If `pip install zotero-mcp-server` fails with build errors (e.g. missing wheels for native dependencies), fall back to a venv with Python 3.12. Not verified whether `zotero-mcp-server` builds cleanly with 3.14.
+> **Note on Python 3.14+:** if `pip install zotero-mcp-server` fails with build errors (missing wheels for native dependencies), fall back to a venv with Python 3.12.
 
 ### 1.3 Enable PowerShell ExecutionPolicy for npm
 
-PowerShell blocks scripts like `npm.ps1` by default. Set once per user (no admin needed):
+PowerShell blocks scripts like `npm.ps1` by default. Set once per user (no admin required):
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
@@ -99,51 +103,52 @@ winget install Obsidian.Obsidian
 
 Alternative: installer from https://obsidian.md.
 
-On first start: select **Open folder as vault** and point to your existing vault, e.g.:
+On first start: select **Open folder as vault** and point to your vault directory, e.g.:
 
 ```
-C:\Users\ogloc\Desktop\OgLocGreenSpace\docs\oglocgreen_obsidian
+C:\Users\YOUR_USERNAME\Documents\my-obsidian-vault
 ```
 
-For Variant A, Obsidian itself is not strictly required at runtime — but installing it is recommended so you can edit notes interactively.
+For Variant A, Obsidian does not need to be running at runtime — but installing it is recommended so you can edit notes interactively.
 
 ---
 
 ## 2. Set up Zotero (both variants)
 
-### 2.1 Start Zotero and enable API access
-
-In Zotero:
+### 2.1 Enable local API access in Zotero
 
 ```
 Edit → Settings → Advanced → Allow other applications on this computer to communicate with Zotero
 ```
 
-Enable. Zotero must be running whenever Claude Desktop is using the MCP server.
+Enable the toggle. Zotero must be running whenever Claude Desktop uses the Zotero MCP server.
 
-### 2.2 Verify the Zotero API
+### 2.2 Verify the Zotero local API
 
 ```powershell
 curl.exe http://localhost:23119/api/users/0/items?limit=1
 ```
 
-Should return JSON with one item.
+Expected: JSON with one item. If this fails, Zotero is not running or the toggle is off.
 
 ### 2.3 Install the Zotero MCP server
 
-> **⚠ Package-name trap:** there are two different projects on PyPI:
+> **⚠ Package-name trap:** two different projects on PyPI share a similar name:
 >
-> - `zotero-mcp` (older, unrelated project, last released April 2025) — **don't install this one**
-> - `zotero-mcp-server` (by 54yyyu, the project we want) — **install this one**
+> - `zotero-mcp` — older, unrelated project — **do not install this**
+> - `zotero-mcp-server` — by 54yyyu, the correct package — **install this**
 >
-> Both projects ship a CLI named `zotero-mcp` (yes, confusing). Installing the wrong package leads to subtle failures: the server starts, Claude shows it as connected, but tool calls return errors because the CLI doesn't recognize `serve` or doesn't accept the same env variables.
+> Both ship a CLI named `zotero-mcp`. Installing the wrong one causes silent failures: Claude shows the server as connected, but tool calls return errors.
 >
-> Check what you have:
+> Check what is currently installed:
 > ```powershell
 > python -m pip show zotero-mcp
 > python -m pip show zotero-mcp-server
 > ```
-> If `zotero-mcp` is installed: `python -m pip uninstall zotero-mcp -y` first.
+> If `zotero-mcp` (the wrong one) is installed, uninstall it first:
+> ```powershell
+> python -m pip uninstall zotero-mcp -y
+> ```
 
 Install the correct package:
 
@@ -157,38 +162,38 @@ Optional — if you want semantic search over your library:
 python -m pip install "zotero-mcp-server[semantic]"
 ```
 
-Resolve path to the executable:
+Find the executable path:
 
 ```powershell
 where.exe zotero-mcp
 ```
 
-Note the full path — needed in the config (Section 3.2 / 4.4).
+Note the full path — you will need it in the config (Sections 3.2 / 4.4).
 
-If `where.exe zotero-mcp` returns nothing, the user-Scripts folder is not in PATH. Add it once:
+If `where.exe zotero-mcp` returns nothing, the user-Scripts folder is not in PATH. Add it:
 
 ```powershell
 $scriptsPath = python -c "import sysconfig; print(sysconfig.get_path('scripts', 'nt_user'))"
 [Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path", "User") + ";$scriptsPath", "User")
 ```
 
-Then **reopen PowerShell** and run `where.exe zotero-mcp` again.
+**Reopen PowerShell**, then run `where.exe zotero-mcp` again.
 
-> **About `zotero-mcp setup`:** the auto-setup helper does work for the 54yyyu package, but on Claude Desktop **MSIX** (Store version) it writes to the classic config path (`%APPDATA%\Claude\claude_desktop_config.json`) instead of the MSIX path (`%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json`). The result: a config file in the wrong place that Claude doesn't read. **On MSIX: skip `zotero-mcp setup` and edit the config manually** as described in Section 5.
+> **About `zotero-mcp setup`:** the auto-setup helper writes to the classic config path (`%APPDATA%\Claude\claude_desktop_config.json`) instead of the MSIX path. Claude Desktop MSIX will not read that file. **Skip `zotero-mcp setup` and configure manually** as described in Section 5.
 
 ---
 
 ## 3. Variant A — Filesystem MCP (default, currently active)
 
-This variant uses the official Anthropic filesystem MCP server pointed directly at the vault directory. It does **not** need Obsidian to be running and does **not** require any Obsidian plugin. The trade-off: the server sees plain Markdown files only — no Dataview output, no resolved backlinks, no tag index. Full-text search across files still works.
+This variant uses the official Anthropic filesystem MCP server pointed at the vault directory. It does **not** require Obsidian to be running and does **not** require any Obsidian plugin. Trade-off: the server sees plain Markdown files only — no Dataview output, no resolved backlinks, no tag index. Full-text search still works.
 
 ### 3.1 Install the filesystem MCP server
-
-The server is shipped as `@modelcontextprotocol/server-filesystem`. It runs via `npx` on demand, but a global install avoids first-run delay:
 
 ```powershell
 npm install -g @modelcontextprotocol/server-filesystem
 ```
+
+A global install avoids the first-run download delay when using `npx`.
 
 ### 3.2 Config snippet for Claude Desktop
 
@@ -200,39 +205,49 @@ npm install -g @modelcontextprotocol/server-filesystem
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "C:\\Users\\ogloc\\Desktop\\OgLocGreenSpace\\docs\\oglocgreen_obsidian"
+        "C:\\Users\\YOUR_USERNAME\\Documents\\YOUR_VAULT_PATH"
       ]
     },
     "zotero": {
-      "command": "C:\\path\\to\\zotero-mcp.exe",
-      "args": ["serve"],
+      "command": "C:\\Users\\YOUR_USERNAME\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\Scripts\\zotero-mcp.exe",
+      "args": [
+        "serve"
+      ],
       "env": {
         "ZOTERO_LOCAL": "true",
-        "ZOTERO_EMBEDDING_MODEL": "default"
+        "ZOTERO_EMBEDDING_MODEL": "default",
+        "ZOTERO_API_KEY": "YOUR_ZOTERO_API_KEY",
+        "ZOTERO_LIBRARY_ID": "YOUR_ZOTERO_LIBRARY_ID"
       }
     }
   }
 }
 ```
 
-Adjustments:
+**What to replace:**
 
-- Replace the vault path with your own (double the backslashes in JSON)
-- Replace `C:\\path\\to\\zotero-mcp.exe` with the result of `where.exe zotero-mcp`
-- The `env` block is **required**. Without `ZOTERO_LOCAL: "true"` the server tries to talk to the Zotero Web API and fails (there's no API key set).
-- `ZOTERO_EMBEDDING_MODEL: "default"` uses the local embedding model (`all-MiniLM-L6-v2`) — no data leaves your machine. Only relevant if you installed the `[semantic]` extra; harmless otherwise.
+| Placeholder              | Where to find the value                                                          |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| `YOUR_USERNAME`          | Your Windows username                                                            |
+| `YOUR_VAULT_PATH`        | Path to your Obsidian vault folder                                               |
+| `zotero-mcp.exe` path    | Output of `where.exe zotero-mcp` (path may differ for Python 3.11/3.12 installs) |
+| `YOUR_ZOTERO_API_KEY`    | Zotero → Settings → Advanced → API keys                                          |
+| `YOUR_ZOTERO_LIBRARY_ID` | Numeric ID visible in the Zotero web interface URL                               |
 
-→ Continue with Section 5 (Configure Claude Desktop) and Section 6 (Verification).
+**Notes:**
+- The `env` block is **required**. Without `ZOTERO_LOCAL: "true"` the server attempts to reach the Zotero Cloud API and fails.
+- `ZOTERO_EMBEDDING_MODEL: "default"` uses a local model (`all-MiniLM-L6-v2`) — no data leaves your machine. Only relevant if you installed the `[semantic]` extra; harmless otherwise.
+- Double all backslashes in JSON paths.
+
+→ Continue with [Section 5 (Configure Claude Desktop)](#5-configure-claude-desktop-both-variants) and [Section 6 (Verification)](#6-verification).
 
 ---
 
 ## 4. Variant B — Local REST API (alternative)
 
-Use this variant if you need Obsidian-specific features such as resolved Dataview queries, semantic backlinks, or plugin state. Requires Obsidian to be running while Claude Desktop is in use.
+Use this variant if you need Obsidian-specific features: resolved Dataview queries, semantic backlinks, or plugin state. Requires Obsidian to be running while Claude Desktop is active.
 
-### 4.1 Enable Local REST API plugin
-
-This plugin is the bridge that the MCP server needs to talk to.
+### 4.1 Enable the Local REST API plugin
 
 1. `Settings → Community plugins → Turn on community plugins` (one-time opt-in)
 2. `Browse → "Local REST API"` → **Install** → **Enable**
@@ -243,20 +258,18 @@ This plugin is the bridge that the MCP server needs to talk to.
 ### 4.2 Verify the API connection
 
 ```powershell
-curl.exe -k https://127.0.0.1:27124/ -H "Authorization: Bearer YOUR_API_KEY"
+curl.exe -k https://127.0.0.1:27124/ -H "Authorization: Bearer YOUR_OBSIDIAN_API_KEY"
 ```
 
-Expected response: JSON with `{"status":"OK",...}`.
+Expected response: `{"status":"OK",...}`.
 
-### 4.3 Install Obsidian MCP server
+### 4.3 Install the Obsidian MCP server
 
 ```powershell
 npm install -g obsidian-mcp-server
 ```
 
-Note install path (can be retrieved with `npm root -g`).
-
-Note: there are several Obsidian MCP implementations (`obsidian-mcp-server` by cyanheads, `mcp-obsidian` by MarkusPfundstein). Both use the Local REST API. Pick one and record the choice in `_DECISIONS.md`.
+> **Note:** several Obsidian MCP implementations exist (`obsidian-mcp-server` by cyanheads, `mcp-obsidian` by MarkusPfundstein). Both use the Local REST API. Pick one and record the choice in `_DECISIONS.md`.
 
 ### 4.4 Config snippet for Claude Desktop
 
@@ -267,30 +280,29 @@ Note: there are several Obsidian MCP implementations (`obsidian-mcp-server` by c
       "command": "npx",
       "args": ["-y", "obsidian-mcp-server"],
       "env": {
-        "OBSIDIAN_API_KEY": "YOUR_API_KEY",
-        "OBSIDIAN_VAULT_PATH": "C:\\Users\\ogloc\\Desktop\\OgLocGreenSpace\\docs\\oglocgreen_obsidian"
+        "OBSIDIAN_API_KEY": "YOUR_OBSIDIAN_API_KEY",
+        "OBSIDIAN_VAULT_PATH": "C:\\Users\\YOUR_USERNAME\\Documents\\YOUR_VAULT_PATH"
       }
     },
     "zotero": {
-      "command": "C:\\path\\to\\zotero-mcp.exe",
-      "args": ["serve"],
+      "command": "C:\\Users\\YOUR_USERNAME\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\Scripts\\zotero-mcp.exe",
+      "args": [
+        "serve"
+      ],
       "env": {
         "ZOTERO_LOCAL": "true",
-        "ZOTERO_EMBEDDING_MODEL": "default"
+        "ZOTERO_EMBEDDING_MODEL": "default",
+        "ZOTERO_API_KEY": "YOUR_ZOTERO_API_KEY",
+        "ZOTERO_LIBRARY_ID": "YOUR_ZOTERO_LIBRARY_ID"
       }
     }
   }
 }
 ```
 
-Adjustments:
+**What to replace:** same placeholders as Section 3.2, plus `YOUR_OBSIDIAN_API_KEY` from the Local REST API plugin settings.
 
-- Replace `YOUR_API_KEY` with the Local REST API key from Obsidian
-- Replace `C:\\path\\to\\zotero-mcp.exe` with the result of `where.exe zotero-mcp` (double the backslashes)
-- Replace the vault path with your own
-- Same Zotero `env` requirement as Variant A — see Section 3.2 notes
-
-→ Continue with Section 5 (Configure Claude Desktop) and Section 6 (Verification).
+→ Continue with [Section 5 (Configure Claude Desktop)](#5-configure-claude-desktop-both-variants) and [Section 6 (Verification)](#6-verification).
 
 ---
 
@@ -302,64 +314,66 @@ Adjustments:
 Get-ChildItem "$env:APPDATA","$env:LOCALAPPDATA" -Filter "claude_desktop_config.json" -Recurse -ErrorAction SilentlyContinue
 ```
 
-Expected path on the MSIX version:
+Expected path on the MSIX (Store) version:
 
 ```
 $env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json
 ```
 
-If the file doesn't exist: create it.
+If the file does not exist, create it.
 
-> **PowerShell quoting:** paths with `$env:` variables must always be in **double quotes**, e.g. `"$env:LOCALAPPDATA\Packages\..."`. Without quotes you get a parser error.
+> **PowerShell quoting:** paths containing `$env:` must be in **double quotes**, e.g. `"$env:LOCALAPPDATA\Packages\..."`. Single quotes will not expand the variable.
 
 ### 5.2 Insert the config snippet
 
-Use the JSON from Section 3.2 (Variant A) or Section 4.4 (Variant B). If you already have entries under `mcpServers`, merge — don't overwrite.
+Use the JSON from Section 3.2 (Variant A) or Section 4.4 (Variant B). If `mcpServers` already has entries, **merge** — do not overwrite the entire file.
 
 ### 5.3 Restart Claude Desktop
 
-Close completely — including from the system tray. Then restart.
+Close fully — including from the system tray. Then restart.
 
-In Settings under `Developer → MCP Servers`, both servers should appear as **connected**.
+Go to `Settings → Developer → MCP Servers`. Both servers should show as **connected** (green).
 
 ---
 
 ## 6. Verification
 
-In a new Claude chat:
+Open a new Claude chat and run these quick checks:
 
-- Test Obsidian: "List the top-level folders of my vault"
-- Test Zotero: "Show me the last 5 items in my Zotero library"
+- **Obsidian:** "List the top-level folders of my vault"
+- **Zotero:** "Show me the last 5 items in my Zotero library"
 
-Both should run without errors.
+Both should return results without errors.
 
-**How to tell which Obsidian variant is actually loaded:**
+**How to identify the active Obsidian variant:**
 
-- **Variant A (Filesystem):** Tools have generic names like `read_text_file`, `list_directory`, `directory_tree`, `move_file`, `edit_file`, `write_file`.
-- **Variant B (REST API):** Tools have Obsidian-specific names like `obsidian_search_notes`, `obsidian_get_note`, `obsidian_list_files_in_vault`.
+| Variant        | Tool names visible in Claude                                                                 |
+| -------------- | -------------------------------------------------------------------------------------------- |
+| A (Filesystem) | `read_text_file`, `list_directory`, `directory_tree`, `move_file`, `edit_file`, `write_file` |
+| B (REST API)   | `obsidian_search_notes`, `obsidian_get_note`, `obsidian_list_files_in_vault`                 |
 
-**Zotero tools you should see (zotero-mcp-server):** `zotero_search_items`, `zotero_search_by_tag`, `zotero_get_item_metadata`, `zotero_get_item_fulltext`, `zotero_semantic_search` (with `[semantic]` extra), `zotero_update_search_database`.
+**Zotero tools (zotero-mcp-server):** `zotero_search_items`, `zotero_search_by_tag`, `zotero_get_item_metadata`, `zotero_get_item_fulltext`, `zotero_semantic_search` (requires `[semantic]` extra), `zotero_update_search_database`.
 
-After successful setup, log it as a decision in your project's `_DECISIONS.md` (which variants, which versions, date) — see Conventions in `_TEMPLATES/_CONVENTIONS.md`.
+After successful setup, record the active variants and package versions in your project's `_DECISIONS.md`.
 
 ---
 
 ## 7. Troubleshooting
 
-| Symptom                                            | Cause                                                                                        | Fix                                                                                                         |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `npm` blocked with `UnauthorizedAccess`            | Restrictive ExecutionPolicy                                                                  | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`                                                       |
-| `pip` not found                                    | Scripts folder not in PATH                                                                   | Use `python -m pip install ...` instead of `pip`                                                            |
-| `where.exe zotero-mcp` returns empty               | User-Scripts folder not in PATH                                                              | Add it via `[Environment]::SetEnvironmentVariable(...)` (see Section 2.3)                                   |
-| MCP server shows red in Claude                     | Wrong config path or broken JSON                                                             | Re-locate path with `Get-ChildItem`, validate JSON                                                          |
-| Variant A: tool calls fail with "path not allowed" | Vault path missing from `args` of filesystem server                                          | Add vault directory to `args`; restart Claude Desktop                                                       |
-| Variant B: API returns nothing                     | Plugin not active or Obsidian closed                                                         | Keep Obsidian open, check plugin status                                                                     |
-| Zotero shows connected but tool calls fail         | Wrong package installed (`zotero-mcp` instead of `zotero-mcp-server`) OR missing `env` block | Run `pip show` checks from Section 2.3, reinstall, add `env` block                                          |
-| Zotero API returns nothing                         | Zotero not open or API toggle off                                                            | Start Zotero, check Settings                                                                                |
-| Zotero: "Missing required environment variables"   | `env` block missing or `ZOTERO_LOCAL` not set                                                | Add `"env": { "ZOTERO_LOCAL": "true", ... }` to the `zotero` server config                                  |
-| `pip install zotero-mcp-server` fails to build     | Python 3.14 too new for native wheels                                                        | Create venv with Python 3.12                                                                                |
-| Semantic search returns no results                 | Embedding DB not built                                                                       | `zotero-mcp update-db --force-rebuild`                                                                      |
-| ChromaDB / stale embedding model errors            | Changed embedding model after first build                                                    | `zotero-mcp update-db --force-rebuild`; if persistent, delete `~/.config/zotero-mcp/chroma_db/` and rebuild |
+| Symptom                                          | Cause                                                                       | Fix                                                                                                              |
+| ------------------------------------------------ | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `npm` blocked with `UnauthorizedAccess`          | Restrictive ExecutionPolicy                                                 | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`                                                            |
+| `pip` not found                                  | Scripts folder not in PATH                                                  | Use `python -m pip install ...` instead of `pip`                                                                 |
+| `where.exe zotero-mcp` returns empty             | User-Scripts folder not in PATH                                             | Add it via `[Environment]::SetEnvironmentVariable(...)` (see Section 2.3)                                        |
+| MCP server shows red in Claude                   | Wrong config path or invalid JSON                                           | Re-locate path with `Get-ChildItem`; validate JSON syntax                                                        |
+| Variant A: "path not allowed" error              | Vault path missing from `args`                                              | Add vault directory to the filesystem server's `args`; restart Claude Desktop                                    |
+| Variant B: API returns nothing                   | Plugin not enabled or Obsidian closed                                       | Keep Obsidian open; check plugin status                                                                          |
+| Zotero connected but tool calls fail             | Wrong package (`zotero-mcp` not `zotero-mcp-server`) or missing `env` block | Run `pip show` checks from Section 2.3; reinstall; add `env` block                                               |
+| Zotero API returns nothing                       | Zotero not running or local API toggle off                                  | Start Zotero; check Settings → Advanced                                                                          |
+| Zotero: "Missing required environment variables" | `env` block absent or `ZOTERO_LOCAL` not set                                | Add `"env": { "ZOTERO_LOCAL": "true", ... }` to the zotero config entry                                          |
+| `pip install zotero-mcp-server` fails to build   | Python version too new — no pre-built wheels                                | Create a venv with Python 3.12                                                                                   |
+| Semantic search returns no results               | Embedding DB not built yet                                                  | Run `zotero-mcp update-db --force-rebuild`                                                                       |
+| ChromaDB / stale embedding model errors          | Embedding model changed after initial build                                 | Run `zotero-mcp update-db --force-rebuild`; if it persists, delete `~/.config/zotero-mcp/chroma_db/` and rebuild |
 
 ---
 
@@ -369,10 +383,10 @@ After successful setup, log it as a decision in your project's `_DECISIONS.md` (
 # Check for updates without installing
 zotero-mcp update --check-only
 
-# Update to latest version (preserves config)
+# Update to latest version (config is preserved)
 zotero-mcp update
 
-# Rebuild semantic-search DB
+# Rebuild the semantic-search database
 zotero-mcp update-db --force-rebuild
 
 # Rebuild with full-text indexing (slower, more thorough)
@@ -383,7 +397,7 @@ zotero-mcp update-db --fulltext --force-rebuild
 
 ## 9. Other platforms (macOS / Linux)
 
-No dedicated guide exists yet. The setup flow is the same as on Windows — install Node.js and Python, install the two MCP servers, register them in the Claude Desktop config — but the details differ:
+No dedicated guide exists yet. The setup flow is the same — install Node.js and Python, install both MCP servers, register them in the Claude Desktop config — but the details differ:
 
 | Aspect                     | macOS                                                             | Linux                                               |
 | -------------------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
@@ -392,11 +406,11 @@ No dedicated guide exists yet. The setup flow is the same as on Windows — inst
 | ExecutionPolicy step       | not needed                                                        | not needed                                          |
 | Zotero MCP executable      | `~/.local/bin/zotero-mcp` (typical)                               | `~/.local/bin/zotero-mcp` (typical)                 |
 
+The JSON config format (Sections 3.2 and 4.4) is identical across platforms — only the paths and the config file location differ. The package-name trap (Section 2.3) and the `env` block requirement apply on all platforms.
+
 **Upstream documentation:**
 - Obsidian Local REST API plugin: https://github.com/coddingtonbear/obsidian-local-rest-api
 - obsidian-mcp-server (cyanheads): https://github.com/cyanheads/obsidian-mcp-server
 - zotero-mcp-server (54yyyu): https://github.com/54yyyu/zotero-mcp
 
-The config JSON format (Sections 3.2 and 4.4) is identical across platforms — only paths and the config file location differ. The package-name trap (Section 2.3) and the `env` block requirement apply on all platforms.
-
-A contributions welcome — create `Setup_Connectors_macOS.md` or `Setup_Connectors_Linux.md` following the structure of this file.
+Contributions welcome — create `Setup_Connectors_macOS.md` or `Setup_Connectors_Linux.md` following the structure of this file.
