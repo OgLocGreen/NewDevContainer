@@ -38,8 +38,21 @@ Thumbs.db
 # Claude Code – personal overrides (team defaults live in .claude/settings.json)
 .claude/settings.local.json
 .claude/.credentials.json
+# Ephemeral Claude Code agent worktrees – must never be committed
+.claude/worktrees/
 
 # Large binaries / build artifacts
 *.log
 build/
 dist/
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.nav
+*.out
+*.pdf
+*.snm
+*.toc
+*.vrb

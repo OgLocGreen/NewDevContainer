@@ -110,10 +110,10 @@
     \node[rounded corners=2pt,fill=hhnyellow!30,draw=hhnorange,line width=0.9pt,
           text width=3.2cm,minimum height=0.9cm] (rules) at (0,0)
       {\textbf{CodingRules.md}\\(eine Quelle)};
-    \node[rounded corners=2pt,fill=cardbg,draw=hhnblue,text width=3cm,minimum height=0.9cm]
-      (claude) at (-4.0,0) {\textbf{\color{hhnblue}Claude Code}\\\code{CLAUDE.md}};
-    \node[rounded corners=2pt,fill=cardbg,draw=hhnpetrol,text width=3cm,minimum height=0.9cm]
-      (copilot) at (4.0,0) {\textbf{\color{hhnpetrol}Copilot}\\\code{copilot-instructions}};
+    \node[rounded corners=2pt,fill=cardbg,draw=hhnblue,text width=4.0cm,minimum height=0.9cm]
+      (claude) at (-4.2,0) {\textbf{\color{hhnblue}Claude Code}\\{\ttfamily\scriptsize\color{hhnblue}CLAUDE.md}};
+    \node[rounded corners=2pt,fill=cardbg,draw=hhnpetrol,text width=4.0cm,minimum height=0.9cm]
+      (copilot) at (4.2,0) {\textbf{\color{hhnpetrol}Copilot}\\{\ttfamily\scriptsize\color{hhnpetrol}copilot-instructions.md}};
     \draw[-{Stealth[length=2mm]},hhncyan,line width=1pt] (rules.west) -- (claude.east);
     \draw[-{Stealth[length=2mm]},hhncyan,line width=1pt] (rules.east) -- (copilot.west);
   \end{tikzpicture}
@@ -315,7 +315,7 @@
 % =====================================================================
 \section{Kritische Einordnung \& Roadmap}
 % =====================================================================
-\begin{frame}{Ehrliche Bilanz}
+\begin{frame}[shrink]{Ehrliche Bilanz}
   \begin{columns}[T]
     \begin{column}{0.44\textwidth}
       \good{Stärken}

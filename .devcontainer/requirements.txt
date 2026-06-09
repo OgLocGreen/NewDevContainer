@@ -1,1 +1,42 @@
+# ---------------------------------------------------------------------------
+# Basic AI / ML dev stack for the NewDevContainer template.
+#
+# Default install pulls CPU wheels — works on the CPU compose profile and
+# on the GPU profile when CUDA is not needed.
+#
+# To get CUDA 12.6 wheels for PyTorch (matches the base image), run after
+# the base install:
+#   pip install --upgrade --index-url https://download.pytorch.org/whl/cu126 \
+#       torch torchvision
+# ---------------------------------------------------------------------------
+
+# Data & numerics
+numpy>=2.0
+pandas>=2.2
+
+# Visualization
+matplotlib>=3.9
+
+# Notebooks
+jupyterlab>=4.2
+ipykernel>=6.29
+ipywidgets>=8.1
+
+# Classical ML
+scikit-learn>=1.5
+
+# Deep learning (CPU build by default — see CUDA note above)
+torch>=2.4
+torchvision>=0.19
+
+# LLM / transformers basics
+transformers>=4.44
+accelerate>=0.33
+
+# Utilities
+tqdm>=4.66
+python-dotenv>=1.0
+pyyaml>=6.0
+
+# Web demo UI
 streamlit==1.42.2
