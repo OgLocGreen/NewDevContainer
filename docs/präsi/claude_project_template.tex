@@ -1,0 +1,373 @@
+% =====================================================================
+%  Praesentation 2: Claude Project Template
+%  Kompilieren:  pdflatex -> pdflatex   (oder latexmk -pdf)
+%  Benoetigt hhntheme.sty im selben Ordner.
+%  Autor/Institut unten ggf. anpassen.
+% =====================================================================
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{hhntheme}
+
+% --- Metadaten -------------------------------------------------------
+\renewcommand{\hhnkicker}{Forschungsinfrastruktur \textperiodcentered\ Template-Serie 2/2}
+\title{Ein disziplinierter KI-Forschungsassistent}
+\subtitle{Das Claude Project Template --- Wissensarchitektur, Rituale, Grounding}
+\author{Christian Heinzmann}
+\institute{Hochschule Heilbronn \textperiodcentered\ Promotionskolleg}
+\date{\today}
+
+\title[Claude Project Template]{Ein disziplinierter KI-Forschungsassistent}
+\author[C. Heinzmann]{Christian Heinzmann}
+
+\begin{document}
+
+\hhntitleframe
+
+\begin{frame}{Agenda}
+  \tableofcontents
+\end{frame}
+
+% =====================================================================
+\section{Motivation: KI in der Promotion}
+% =====================================================================
+\begin{frame}{Zwei Versagensmodi von LLMs in der Forschung}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \warn{1. Wissens-Entropie}
+      \begin{itemize}
+        \item Erkenntnisse verstreuen sich über Dutzende Chats.
+        \item Entscheidungen, Begründungen, gelesene Paper gehen verloren.
+        \item Kein kumulatives Gedächtnis über Projekte hinweg.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \warn{2. Halluzination}
+      \begin{itemize}
+        \item Erfundene APIs, Flags, Zitate, Fakten.
+        \item In der Wissenschaft \hl{inakzeptabel} ---
+              eine falsche Referenz untergräbt alles.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vfill
+  \begin{takeaway}[These]
+    Die Antwort ist nicht ,,ein besseres Modell``, sondern \hl{bessere Struktur
+    und Guardrails}. Das Template macht KI-Nutzung \emph{diszipliniert} ---
+    nicht mächtiger, sondern verlässlicher.
+  \end{takeaway}
+\end{frame}
+
+% =====================================================================
+\section{Zwei Ebenen des Setups}
+% =====================================================================
+\begin{frame}{Zwei komplementäre Ebenen}
+  \begin{center}
+  \begin{tikzpicture}[font=\small,every node/.style={align=center}]
+    \node[rounded corners=3pt,fill=hhnbluelight!40,draw=hhnblue,line width=1pt,
+          text width=5.4cm,minimum height=2.6cm,anchor=north] (l1) at (-3.3,0)
+      {\textbf{\color{hhnblue}Ebene 1 --- im Repository}\\[2pt]
+       \scriptsize \emph{Der Agent beim Coden}\\[4pt]
+       \scriptsize \code{CLAUDE.md} \textperiodcentered\ \code{.claude/}
+       \textperiodcentered\ \code{.github/}\\
+       \scriptsize Konventionen, Permissions,\\Grounding-Skill};
+    \node[rounded corners=3pt,fill=lightteal!30,draw=hhnpetrol,line width=1pt,
+          text width=5.4cm,minimum height=2.6cm,anchor=north] (l2) at (3.3,0)
+      {\textbf{\color{hhnpetrol}Ebene 2 --- auf dem Desktop}\\[2pt]
+       \scriptsize \emph{Die Promotion als Wissenssystem}\\[4pt]
+       \scriptsize Claude Desktop + Obsidian + Zotero\\
+       \scriptsize Drei-Schienen-Architektur,\\Rituale, Personas};
+    \draw[{Stealth[length=2.5mm]}-{Stealth[length=2.5mm]},hhncyan,line width=1.2pt]
+      (l1.east) -- (l2.west) node[midway,above,font=\scriptsize\color{darkgray}]{wiki-update};
+  \end{tikzpicture}
+  \end{center}
+  \vspace{0.3em}
+  {\footnotesize Ebene 1 lebt im austauschbaren Code-Repo (Ausführung).
+  Ebene 2 ist das langlebige Gedächtnis (Strategie + Referenz). Sie koppeln
+  nur an definierten Punkten --- nie per Auto-Sync.}
+\end{frame}
+
+% =====================================================================
+\section{Ebene 1: Das KI-bewusste Repository}
+% =====================================================================
+\begin{frame}{Ein Regelsatz, zwei Assistenten}
+  \begin{itemize}
+    \item \code{CLAUDE.md} wird von Claude Code \hl{automatisch geladen}:
+          Projektkontext, Naming-Tabelle, Docstring-Pflicht, Git-Workflow.
+    \item \hl{Single Source of Truth}: \code{CodingRules.md} wird per
+          \code{@}-Import in \code{CLAUDE.md} \emph{und} in
+          \code{copilot-instructions.md} eingebunden ---
+          Claude \& Copilot driften nie auseinander.
+    \item Jedes Claude-Artefakt hat einen \hl{Copilot-Zwilling}
+          (Slash-Command $\leftrightarrow$ prompt file),
+          dieselbe Logik in zwei Vendor-Formaten.
+  \end{itemize}
+  \vfill
+  \begin{center}
+  \begin{tikzpicture}[font=\scriptsize,every node/.style={align=center}]
+    \node[rounded corners=2pt,fill=hhnyellow!30,draw=hhnorange,line width=0.9pt,
+          text width=3.2cm,minimum height=0.9cm] (rules) at (0,0)
+      {\textbf{CodingRules.md}\\(eine Quelle)};
+    \node[rounded corners=2pt,fill=cardbg,draw=hhnblue,text width=3cm,minimum height=0.9cm]
+      (claude) at (-4.0,0) {\textbf{\color{hhnblue}Claude Code}\\\code{CLAUDE.md}};
+    \node[rounded corners=2pt,fill=cardbg,draw=hhnpetrol,text width=3cm,minimum height=0.9cm]
+      (copilot) at (4.0,0) {\textbf{\color{hhnpetrol}Copilot}\\\code{copilot-instructions}};
+    \draw[-{Stealth[length=2mm]},hhncyan,line width=1pt] (rules.west) -- (claude.east);
+    \draw[-{Stealth[length=2mm]},hhncyan,line width=1pt] (rules.east) -- (copilot.west);
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Least-Privilege \& Grounding}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Gestufte Permissions} (\code{settings.json})
+      \begin{itemize}
+        \item \good{auto-erlaubt}: read-only/Dev ---
+              \code{git status/diff/log}, \code{python}, \code{pip},
+              \code{pytest}, \code{ls}, Read/Grep/Glob.
+        \item \warn{Bestätigung nötig}: \code{git push/reset/rebase},
+              \code{rm}, \code{docker}, \code{Write}, \code{Edit}.
+        \item Pro Command tool-scoped: ein Doc-Loader \emph{kann} keine
+              Dateien ändern.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{\code{package-docs}-Skill (anti-hallucination)}
+      \begin{itemize}
+        \item Modell-getriggert über das \code{description}-Feld
+              (auch bei Fehler-Tracebacks).
+        \item Disziplin: README-Index zuerst, nur 1--2 gezielte Dateien
+              laden, API-Signaturen \hl{wörtlich zitieren}, Quelle als
+              \code{datei:zeile}.
+        \item Harte Regel: \warn{,,Never invent APIs --- frag nach``}.
+      \end{itemize}
+      \begin{takeaway}
+        Antworten werden \hl{geerdet} und copy-paste-sicher.
+      \end{takeaway}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Ebene 2: Die Drei-Schienen-Wissensarchitektur}
+% =====================================================================
+\begin{frame}{Drei Schienen, die nicht auto-synchronisieren}
+  \begin{center}
+  \begin{tikzpicture}[font=\scriptsize,every node/.style={align=center}]
+    \tikzset{lane/.style={rounded corners=3pt,line width=1pt,text width=3.5cm,
+                          minimum height=3.0cm,anchor=north}}
+    \node[lane,fill=hhnbluelight!35,draw=hhnblue] (s) at (-4.4,0)
+      {\textbf{\color{hhnblue}Strategie}\\[3pt]
+       \emph{OgVault} (Obsidian)\\[4pt]
+       \code{\_PROJECT}\\\code{\_PLAN}\\\code{\_DECISIONS}\\[4pt]
+       \scriptsize mehrmals/Woche};
+    \node[lane,fill=lightteal!30,draw=hhnpetrol] (r) at (0,0)
+      {\textbf{\color{hhnpetrol}Referenz}\\[3pt]
+       \emph{og-wiki} (Git-Repo)\\[4pt]
+       concepts/\\papers/\\projects/\\[4pt]
+       \scriptsize wöchentlich};
+    \node[lane,fill=hhnyellow!25,draw=hhnorange] (e) at (4.4,0)
+      {\textbf{\color{hhnorange!80!black}Ausführung}\\[3pt]
+       \emph{DevContainer-Repos}\\[4pt]
+       austauschbar\\Code + Claude Code\\[4pt]
+       \scriptsize projektabhängig};
+    \draw[-{Stealth[length=2mm]},hhncyan,line width=1pt,dashed]
+      (s.south) to[bend right=18] node[below,font=\tiny\color{darkgray}]{TODO bei Repo-Start} (e.south);
+    \draw[-{Stealth[length=2mm]},hhngreen,line width=1.3pt]
+      (e.north) to[bend right=18] node[above,font=\tiny\color{darkgray}]{wiki-update} (r.north);
+    \draw[-{Stealth[length=2mm]},hhnblue,line width=1.3pt]
+      (s.east) -- node[above,font=\tiny\color{darkgray}]{/wiki-realign} (r.west);
+  \end{tikzpicture}
+  \end{center}
+  \vspace{0.2em}
+  {\footnotesize \hl{Prinzip:} Strategie lebt einmal und entwickelt sich;
+  Referenz wächst und wird nachgeschlagen; Ausführung kommt, macht ihren Job,
+  geht. \hl{Ein Repo darf sterben --- das Wissen lebt im Wiki und Vault weiter.}}
+\end{frame}
+
+% =====================================================================
+\section{Rituale \& asymmetrisches Schreiben}
+% =====================================================================
+\begin{frame}{Jede Kopplung ist ein bewusstes Ritual}
+  \begin{itemize}
+    \item \hl{\code{/push}} --- Chat $\rightarrow$ OgVault. Fünf Schritte:
+          Recap $\rightarrow$ Diff-Plan $\rightarrow$ Klärung $\rightarrow$
+          Schreiben (pro Datei bestätigt) $\rightarrow$ Session-Closer.
+    \item \hl{\code{wiki-update}} --- Repo $\rightarrow$ Wiki. Pro
+          Coding-Session; \code{.manifest.json} fürs Delta-Tracking;
+          endet mit \code{git push}.
+    \item \hl{\code{/wiki-realign}} --- OgVault $\rightarrow$ Wiki.
+          \warn{Nur} bei Strategiewechsel, \warn{nie} automatisch ---
+          Vorschlag, dann Bestätigung.
+    \item \hl{Wiki $\rightarrow$ OgVault} --- selten, beim periodischen
+          Review, via \code{/push}.
+  \end{itemize}
+  \vfill
+  \begin{takeaway}[Asymmetrie]
+    \hl{Lesen ist frei} (Auto-Pull, risikolos), \hl{Schreiben nur über das
+    bestätigte \code{/push}}. So bleibt Brainstorming uninhibiert und der Vault
+    sauber --- \emph{Human-in-the-loop write control}.
+  \end{takeaway}
+\end{frame}
+
+% =====================================================================
+\section{Schutzmechanismen gegen Halluzination \& Entropie}
+% =====================================================================
+\begin{frame}{Guardrails, die Vertrauen erzeugen}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item \hl{Chat = ephemeres Arbeitsverzeichnis}, \hl{Vault =
+              persistentes Repository} --- bewusste Trennung.
+        \item \code{\_DECISIONS.md} ist \hl{append-only}, nie löschen ---
+              auditierbare Spur, warum Pfade verlassen wurden.
+        \item Nie löschen, sondern nach \code{archive/} verschieben
+              (Scratch ist die einzige Ausnahme).
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item \hl{Drift-Check} alle 3--4 Austausche --- passives
+              Frühwarnsystem, kein Nagging, verschiebt sich bei laufendem
+              Gedanken.
+        \item \hl{Vertrauenshierarchie} bei \code{/sync}: Zotero = Master
+              für Metadaten, Obsidian = Master für Notizen.
+        \item \hl{Nie Zitate erfinden} --- explizite Regel im System-Prompt.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vfill
+  {\footnotesize Zweisprachig nach Design: \hl{Konversation Deutsch}, aber
+  \hl{aller akademischer Inhalt Englisch} (RQs, Titel, Definitionen, Code) ---
+  und LaTeX immer als \code{.tex}-Quelle mit Versionsmarken.}
+\end{frame}
+
+% =====================================================================
+\section{Die Dr.-Personas}
+% =====================================================================
+\begin{frame}{Modulare Rollen-Prompts}
+  \begin{itemize}
+    \item Orthogonale, ladbare Session-Modi (\hl{eine pro Session}),
+          per natürlichem Trigger ,,Lade Dr.\ X``.
+  \end{itemize}
+  \vspace{0.3em}
+  \begin{center}
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}p{2.6cm}p{9.0cm}@{}}
+    \toprule
+    \textbf{\color{hhnblue}Dr. EveryDay} & Verifizierte Alltags-/Technikfragen:
+      offizielle Quellen vor Aggregatoren, harte Anti-Halluzination,
+      ,,nicht verifiziert``-Markierung. \\
+    \textbf{\color{hhnblue}Dr. Code} & Vollständige, dokumentierte Dateien +
+      README, Doxygen-Docstrings, Typ-Hints, Versionschecks. \\
+    \textbf{\color{hhnblue}Dr. Analyse} & Psychologische Text-/E-Mail-Optimierung
+      aus vier Leserperspektiven (Empfänger, Autor, PR, Worst-Case). \\
+    \textbf{\color{hhnblue}Dr. Mail} & Schlanke formale E-Mail-Korrektur ---
+      Grammatik/Stil, ohne den Inhalt zu verändern. \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vspace{0.3em}
+  {\footnotesize Persistiert über drei Claude-\emph{Memory-Edits} (Workflow,
+  Vault-Pfad, Persona-Trigger) --- überlebt Sessions ohne erneutes Einfügen.
+  Teilbar mit Studierenden und Kolleg:innen.}
+\end{frame}
+
+% =====================================================================
+\section{Konnektoren: MCP (Obsidian + Zotero)}
+% =====================================================================
+\begin{frame}{Lokale, datensparsame Anbindung}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Obsidian --- zwei Varianten}
+      \begin{itemize}
+        \item \good{A: Filesystem-MCP} (Default) --- kein Plugin,
+              reines Markdown, Obsidian muss nicht laufen.
+        \item \good{B: Local REST API} --- Dataview/Backlinks/Tags,
+              Ports 27124/27123, Obsidian muss laufen.
+      \end{itemize}
+      \textbf{Zotero}
+      \begin{itemize}
+        \item \code{ZOTERO\_LOCAL=true} --- lokal, Embeddings via
+              all-MiniLM-L6-v2: \hl{keine Daten verlassen die Maschine}.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Dokumentierte Footguns}
+      \begin{itemize}
+        \item \warn{\code{zotero-mcp-server}} (von 54yyyu) installieren ---
+              \warn{nicht} \code{zotero-mcp}; beide existieren und liefern
+              dieselbe CLI, der falsche scheitert \emph{stumm}.
+        \item MSIX-Config liegt unter
+              \code{\%LOCALAPPDATA\%\textbackslash...} ---
+              das Auto-Setup schreibt in den falschen klassischen Pfad.
+      \end{itemize}
+      \begin{takeaway}
+        Voraussetzung: mind.\ Claude Pro; MCP nur Desktop/Web, nicht mobil.
+      \end{takeaway}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Kritische Einordnung \& Roadmap}
+% =====================================================================
+\begin{frame}{Ehrliche Bilanz}
+  \begin{columns}[T]
+    \begin{column}{0.44\textwidth}
+      \good{Stärken}
+      \begin{itemize}
+        \item Struktur gegen Wissens-Entropie
+        \item Grounding gegen Halluzination
+        \item Human-in-the-loop-Schreiben
+        \item Vendor-agnostisch (Claude + Copilot)
+        \item Lokal \& datensparsam
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.56\textwidth}
+      \warn{Offene Punkte (Roadmap)}
+      \begin{itemize}
+        \item \warn{Daten-/KI-Governance} explizit dokumentieren:
+              was verlässt die Maschine, GDPR, no-training-Plan.
+        \item \warn{Keine Evaluation}: ein gemessener
+              ,,grounded vs.\ ungrounded``-Vergleich macht aus der
+              Design-Behauptung Evidenz.
+        \item \warn{Naming-/Doku-Drift}: \code{\_TEMPLATES} vs.\
+              \code{\_PROJECT\_TEMPLATES}; \code{src/NewWandB} vs.\
+              \code{src/Template}.
+        \item \warn{Duplikation}: \code{read-package-a/b} + Copilot-Zwillinge
+              = 6 Dateien für 3 Logiken $\rightarrow$ parametrisieren.
+        \item \warn{Aufräumen}: \code{.claude/worktrees/} \& \code{temp.md}
+              nicht versionieren; toter \code{cpp\_referenz}-Pfad in
+              \code{settings.json}.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Zusammenfassung}
+% =====================================================================
+\begin{frame}{Zusammenfassung}
+  \begin{itemize}
+    \item Nicht ,,mehr KI``, sondern \hl{disziplinierte KI}:
+          Struktur + Rituale + Grounding.
+    \item \hl{Zwei Ebenen}: der Agent im Repo (Ausführung) und das
+          Wissenssystem auf dem Desktop (Strategie + Referenz).
+    \item \hl{Schreiben ist ein bewusster, bestätigter Akt} ---
+          der Vault bleibt vertrauenswürdig, der Chat bleibt frei.
+    \item Roadmap: \emph{Governance-Notiz + kleine Eval + Konsolidierung}
+          der Naming-/Doku-Drift.
+  \end{itemize}
+  \vfill
+  \begin{center}
+    {\large\color{hhnblue}\textbf{Fragen \& Diskussion}}\\[2pt]
+    {\footnotesize\color{darkgray} Zusammen mit Präsentation 1 (DevContainer)
+    ergibt sich die volle Forschungs-Infrastruktur.}
+  \end{center}
+\end{frame}
+
+\end{document}

@@ -1,0 +1,390 @@
+% =====================================================================
+%  Praesentation 1: DevContainer Template
+%  Kompilieren:  pdflatex -> pdflatex   (oder latexmk -pdf)
+%  Benoetigt hhntheme.sty im selben Ordner.
+%  Autor/Institut unten ggf. anpassen.
+% =====================================================================
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{hhntheme}
+
+% --- Metadaten -------------------------------------------------------
+\renewcommand{\hhnkicker}{Forschungsinfrastruktur \textperiodcentered\ Template-Serie 1/2}
+\title{Reproduzierbare Forschungsumgebungen}
+\subtitle{Ein GPU-fähiges Dev-Container-Template für die Arbeitsgruppe}
+\author{Christian Heinzmann}
+\institute{Hochschule Heilbronn \textperiodcentered\ Promotionskolleg}
+\date{\today}
+
+% Kurzfassungen fuer die Fusszeile
+\title[DevContainer-Template]{Reproduzierbare Forschungsumgebungen}
+\author[C. Heinzmann]{Christian Heinzmann}
+
+\begin{document}
+
+% --- Titel -----------------------------------------------------------
+\hhntitleframe
+
+% --- Agenda ----------------------------------------------------------
+\begin{frame}{Agenda}
+  \tableofcontents
+\end{frame}
+
+% =====================================================================
+\section{Motivation: Das Reproduzierbarkeitsproblem}
+% =====================================================================
+\begin{frame}{Warum die Umgebung Teil der Wissenschaft ist}
+  \begin{itemize}
+    \item \hl{,,Works on my machine``} --- Ergebnisse hängen an undokumentierten
+          lokalen Zuständen (Treiber, Bibliotheksversionen, Pfade).
+    \item \hl{Environment-Drift}: CUDA, Python und Paketversionen divergieren
+          zwischen Personen und Maschinen --- oft unbemerkt.
+    \item \hl{Onboarding-Kosten}: Tage, bis ein neues Mitglied überhaupt
+          rechnen kann; jede Maschine ein Einzelfall.
+    \item \hl{Heterogene Hardware}: Laptop, Workstation, geteilte GPU-Server ---
+          dieselbe Pipeline, unterschiedliche Realität.
+  \end{itemize}
+  \vfill
+  \begin{takeaway}
+    Computational Reproducibility ist kein Nice-to-have, sondern Teil
+    wissenschaftlicher Sorgfalt. Die \hl{Umgebung muss versioniert, geteilt und
+    identisch instanziierbar} sein --- genau wie der Code selbst.
+  \end{takeaway}
+\end{frame}
+
+% =====================================================================
+\section{Überblick: Was das Template liefert}
+% =====================================================================
+\begin{frame}[fragile]{Das Versprechen: Klonen $\rightarrow$ Reopen $\rightarrow$ Coden}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \textbf{Drei Schritte, plattformunabhängig:}
+      \begin{enumerate}
+        \item Repository klonen (inkl. Submodule)
+        \item In VS Code \emph{,,Reopen in Container``}
+        \item Loslegen --- Umgebung ist fertig
+      \end{enumerate}
+      \vspace{0.4em}
+      \textbf{Host-Voraussetzungen (das ist alles):}
+      \begin{itemize}
+        \item Git \textperiodcentered\ Docker (Compose V2)
+        \item VS Code + Dev-Containers-Extension
+        \item NVIDIA-GPU + Treiber \emph{(optional)}
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+\begin{lstlisting}[language=myshell]
+# 1) Klonen inkl. Submodul
+git clone <repo-url>
+git submodule update --init --recursive
+
+# 2) VS Code: F1 ->
+#    "Dev Containers: Reopen in Container"
+
+# 3) fertig - identisch auf
+#    Windows / macOS / Linux
+\end{lstlisting}
+      \begin{takeaway}[Eine Spezifikation]
+        Eine deklarative Definition erzeugt auf \hl{jedem} Host dieselbe
+        GPU-fähige, KI-unterstützte Arbeitsumgebung.
+      \end{takeaway}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Was vorinstalliert ist}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Stack}
+      \begin{itemize}
+        \item Ubuntu 24.04 \textperiodcentered\ CUDA 12.6.2 + cuDNN
+        \item Python 3.12 in isoliertem venv (\code{/app/venv})
+        \item Node.js 20 (für die Claude-Code-CLI)
+      \end{itemize}
+      \vspace{0.3em}
+      \textbf{KI-Werkzeuge ab Werk}
+      \begin{itemize}
+        \item Claude Code (CLI + VS-Code-Extension)
+        \item GitHub Copilot + Copilot Chat
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Editor-Tooling}
+      \begin{itemize}
+        \item $\sim$30 VS-Code-Extensions automatisch
+        \item Python/Pylance/Debugpy, vollständige
+              Jupyter-Suite, Docker, Draw.io, Git-Graph
+        \item Formatierung \& Linting konfiguriert
+              (100-Zeichen-Lineal als Coding-Rule)
+      \end{itemize}
+      \vspace{0.3em}
+      \begin{takeaway}[Ziel]
+        Der erste Commit, nicht das Setup, ist der erste produktive Schritt.
+      \end{takeaway}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Architektur: Drei Konfigurationsebenen}
+% =====================================================================
+\begin{frame}{Trennung der Zuständigkeiten}
+  \begin{center}
+  \begin{tikzpicture}[font=\small,every node/.style={align=center}]
+    \tikzset{
+      layer/.style={rounded corners=3pt,minimum width=10.6cm,minimum height=1.35cm,
+                    text width=10.2cm,draw=hhnblue,line width=1pt},
+    }
+    \node[layer,fill=cardbg] (dc) at (0,0)
+      {\textbf{\color{hhnblue}devcontainer.json} \;--\; IDE-Glue\\
+       \scriptsize Extensions \textperiodcentered\ Default-Interpreter \textperiodcentered\ Feature \emph{claude-code} \textperiodcentered\ \code{postStartCommand}};
+    \node[layer,fill=lightteal!25] (cp) at (0,-1.6)
+      {\textbf{\color{hhnpetrol}docker-compose.yml} \;--\; Laufzeit\\
+       \scriptsize GPU-Reservierung \textperiodcentered\ Mounts \textperiodcentered\ Ports \textperiodcentered\ \code{shm\_size}};
+    \node[layer,fill=hhnbluelight!40] (df) at (0,-3.2)
+      {\textbf{\color{hhnblue}Dockerfile} \;--\; Build-Zeit (unveränderliche Basis)\\
+       \scriptsize OS \textperiodcentered\ System-Pakete \textperiodcentered\ CUDA/cuDNN \textperiodcentered\ venv};
+    \draw[-{Stealth[length=2.5mm]},hhncyan,line width=1.2pt] (df.north) -- (cp.south);
+    \draw[-{Stealth[length=2.5mm]},hhncyan,line width=1.2pt] (cp.north) -- (dc.south);
+  \end{tikzpicture}
+  \end{center}
+  \vspace{-0.2em}
+  {\footnotesize \hl{Designprinzip:} schwere System-Pakete werden ins Image
+  \emph{gebacken} (Build-Zeit), die Python-Abhängigkeiten bleiben zur
+  \emph{Laufzeit} die lebende Single Source of Truth.}
+\end{frame}
+
+% =====================================================================
+\section{Reproduzierbarkeit \& GPU}
+% =====================================================================
+\begin{frame}[fragile]{Reproduzierbarkeit beginnt am OS-Layer}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item Basis-Image \hl{exakt gepinnt} --- kein \code{latest},
+              sondern ein fixer Tag (rechts):
+        \item Python systemseitig, aber in venv \code{/app/venv} isoliert ---
+              überall als Default-Interpreter gesetzt (Dockerfile,
+              devcontainer.json, settings.json, Workspace).
+        \item Node.js 20 \emph{ausschließlich} für die Claude-Code-CLI.
+      \end{itemize}
+      \begin{takeaway}[Konsequenz]
+        Jede Person erhält denselben CUDA\,/\,cuDNN\,/\,Python-Stack ---
+        Reproduzierbarkeit startet am OS-/Treiber-Layer, nicht erst bei
+        \code{pip}.
+      \end{takeaway}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+\begin{lstlisting}[language=mydocker]
+FROM nvidia/cuda:12.6.2-cudnn-devel-ubuntu24.04
+
+RUN apt-get update && apt-get install -y \
+    python3.12 python3-pip python3.12-venv \
+    git curl docker.io docker-compose-v2 \
+    poppler-utils chromium ffmpeg ...
+
+# venv als Default-Interpreter
+RUN python3 -m venv /app/venv
+ENV VIRTUAL_ENV=/app/venv
+ENV PATH="/app/venv/bin:$PATH"
+\end{lstlisting}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{GPU-Defaults für ML-Workloads}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{itemize}
+        \item \hl{Alle GPUs reserviert} über Compose
+              \code{deploy.resources.reservations}.
+        \item \hl{\code{shm\_size: 32\,GB}} --- löst den klassischen
+              Shared-Memory-Engpass beim Daten-Loading.
+        \item X11 durchgereicht (GUI-Apps), Port 4010 für Streamlit
+              forwarded.
+        \item Verifikation \emph{vor} jeder Projektarbeit:
+      \end{itemize}
+\begin{lstlisting}[language=myshell]
+docker run --rm --gpus all \
+  nvidia/cuda:12.6.2-base-ubuntu24.04 nvidia-smi
+\end{lstlisting}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+\begin{lstlisting}[language=myyaml]
+deploy:
+  resources:
+    reservations:
+      devices:
+        - driver: nvidia
+          count: all
+          capabilities: [gpu]
+shm_size: '32gb'
+volumes:
+  - ${localWorkspaceFolder:-..}:/app/...
+  - ~/.gitconfig:/etc/gitconfig:ro
+  - ~/.ssh:/root/.ssh:ro
+\end{lstlisting}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Automation: idempotenter Start}
+  \begin{itemize}
+    \item \code{postStartCommand} ruft bei jedem Start \code{setup\_startup.sh}
+          (mit \code{set -e}).
+    \item Schritte: venv aktivieren, \code{requirements} installieren, X11
+          freigeben, GitHub-SSH prüfen.
+    \item \hl{Non-fatal by design}: jeder optionale Schritt ist mit
+          \code{|| true} abgesichert --- ein fehlendes X-Display oder
+          SSH-Key blockiert den Container nie.
+    \item Credentials werden \hl{wiederverwendet statt eingebrannt}:
+          \code{\textasciitilde/.gitconfig} und \code{\textasciitilde/.ssh}
+          read-only gemountet.
+  \end{itemize}
+\begin{lstlisting}[language=myshell]
+source /app/venv/bin/activate
+python -m pip install --no-cache-dir -r .../requirements.txt
+xhost +local:docker >/dev/null 2>&1 || true          # GUI, best effort
+ssh -o StrictHostKeyChecking=accept-new -T git@github.com || true   # nur Info
+\end{lstlisting}
+\end{frame}
+
+% =====================================================================
+\section{KI-Werkzeuge als Infrastruktur}
+% =====================================================================
+\begin{frame}{KI-Assistenten sind first-class Umgebung}
+  \begin{itemize}
+    \item Claude Code wird \hl{dreifach} bereitgestellt:
+          devcontainer-Feature \code{anthropics/.../claude-code:1},
+          VS-Code-Extension und Node 20 im Image.
+    \item \hl{Ein Regelsatz für beide Assistenten}: \code{CLAUDE.md},
+          \code{.claude/settings.json} und \code{.github/copilot-instructions.md}
+          verweisen auf \emph{dieselbe} \code{CodingRules.md}.
+    \item Single Source of Truth: Konventionen einmal pflegen ---
+          Claude Code \emph{und} Copilot folgen automatisch.
+  \end{itemize}
+  \vfill
+  \begin{takeaway}[Brücke]
+    Die KI-Werkzeuge sind kein Add-on, sondern Teil der reproduzierbaren
+    Umgebung. \hl{Details in Präsentation 2} (Claude Project Template).
+  \end{takeaway}
+\end{frame}
+
+% =====================================================================
+\section{Verteiltes Arbeiten: Laptop $\leftrightarrow$ GPU-Server}
+% =====================================================================
+\begin{frame}[fragile]{Denselben Container überall ausführen}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Variante A --- alles remote}\\
+      Workspace \emph{und} Container auf dem GPU-Server (Remote-SSH +
+      ,,Reopen in Container``).
+      \vspace{0.5em}
+
+      \textbf{Variante B --- Code lokal, GPU remote}\\
+      Docker-Context über SSH: der Laptop behält den Code, der Container
+      läuft auf dem Server --- \hl{GPU ausleihen, ohne Code zu kopieren}.
+\begin{lstlisting}[language=myshell]
+docker context create gpu \
+  --docker host=ssh://gpu-server
+docker context use gpu
+\end{lstlisting}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Begleitende Host-Playbooks (\code{docs/help/NewPC/})}
+      \begin{itemize}
+        \item \hl{Multi-Remote-Git}: ein \code{git push all main}
+              $\rightarrow$ GitHub \emph{und} Uni-GitLab gleichzeitig.
+        \item \hl{eduVPN Split-Tunneling}: nur das Campus-Subnetz durch
+              den Tunnel (systemd-persistent).
+        \item \hl{SMB/CIFS-Auto-Mount}: \code{vers=3.0}, \code{nofail},
+              \code{x-systemd.automount}.
+      \end{itemize}
+      \begin{takeaway}
+        Das Template adressiert die reale Topologie einer Arbeitsgruppe ---
+        nicht nur die ideale Einzelmaschine.
+      \end{takeaway}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Kritische Einordnung \& Roadmap}
+% =====================================================================
+\begin{frame}{Ehrliche Bilanz}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      \good{Stärken}
+      \begin{itemize}
+        \item Basis-Image am OS-Layer gepinnt
+        \item GPU + ML-Defaults out-of-the-box
+        \item KI-Tooling integriert \& geteilt
+        \item Remote-/Multi-Maschinen-fähig
+        \item Umfangreich dokumentiert
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.54\textwidth}
+      \warn{Offene Punkte (Roadmap)}
+      \begin{itemize}
+        \item \warn{Python-Deps nicht gelockt} (nur
+              \code{streamlit==1.42.2}) $\rightarrow$ Lockfile
+              (\code{uv}/\code{pip-tools}, Hashes).
+        \item \warn{Keine CI} $\rightarrow$ Actions: Image-Build,
+              \code{black}/\code{pylint}, \code{pytest}.
+        \item \warn{Doku-Drift}: ReadMe nennt CUDA 12.6.0/Ubuntu 22.04 \&
+              \code{python:3.9}; Submodul \code{src/Template} vs.\ Doku
+              \code{src/NewWandB}.
+        \item \warn{Kein CPU-Fallback}: \code{count: all} hart kodiert;
+              Doku verweist auf nicht existente \code{\#\,NVIDIA}-Marker.
+        \item \warn{Sicherheit auf geteilten Servern}: \code{docker.sock} +
+              ganzes \code{\textasciitilde/.ssh} gemountet, root im Container.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Konkrete nächste Schritte}
+  \begin{enumerate}
+    \item \hl{Lockfile einführen} --- repräsentativen Dev-Stack
+          (numpy, pandas, torch passend zu CUDA 12.6, pytest/black/pylint)
+          vollständig pinnen, mit Hashes.
+    \item \hl{Minimale CI} --- Image bauen, Format/Lint/Tests laufen lassen,
+          \code{main} mit Required-Checks schützen (macht die ,,getestet vor
+          Merge``-Regel real statt aspirativ).
+    \item \hl{Konsistenz-Pass} --- ReadMes aus den echten Dateien speisen,
+          Submodul-Namen vereinheitlichen, \code{.claude/worktrees/} aus der
+          Versionierung nehmen.
+    \item \hl{CPU-Profil} --- Compose-Profile oder
+          \code{docker-compose.cpu.yml}, damit auch reine Laptops starten.
+    \item \hl{Härtungsprofil} dokumentieren --- non-root-User mit Host-UID,
+          SSH-Agent-Forwarding statt \code{\textasciitilde/.ssh}-Mount,
+          \code{docker.sock} opt-in.
+    \item \hl{FAIR-Anker} --- \code{LICENSE}, \code{CITATION.cff},
+          Zenodo-DOI: vom Setup zum \emph{zitierbaren} Artefakt.
+  \end{enumerate}
+\end{frame}
+
+% =====================================================================
+\section{Zusammenfassung}
+% =====================================================================
+\begin{frame}{Zusammenfassung}
+  \begin{itemize}
+    \item Die \hl{Umgebung wird zum versionierten Artefakt} ---
+          Reproduzierbarkeit ab dem OS-Layer.
+    \item \hl{Ein Klick} zur GPU-fähigen, KI-unterstützten Arbeitsumgebung,
+          identisch auf jedem Host.
+    \item \hl{Skaliert} über Laptops und geteilte GPU-Server hinweg.
+    \item Roadmap: \emph{Lockfile + CI + Doku-Konsolidierung + DOI} ---
+          von ,,reproduzierbar in der Absicht`` zu ,,maschinell verifiziert``.
+  \end{itemize}
+  \vfill
+  \begin{center}
+    {\large\color{hhnblue}\textbf{Fragen \& Diskussion}}\\[2pt]
+    {\footnotesize\color{darkgray} Fortsetzung: Präsentation 2 --- Claude Project Template}
+  \end{center}
+\end{frame}
+
+\end{document}

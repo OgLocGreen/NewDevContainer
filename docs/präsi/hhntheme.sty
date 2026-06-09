@@ -1,0 +1,225 @@
+% =====================================================================
+%  hhntheme.sty  --  Beamer-Theme im HHN Corporate Design
+%  Farbpalette aus docs/help/Templates/color_hhn_template.md
+%  Kompatibel mit pdflatex (Overleaf-tauglich, nur Standardpakete).
+%  Verwendung:  \usepackage{hhntheme}   (Datei im selben Ordner)
+% =====================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{hhntheme}[2026/06/09 HHN Beamer theme]
+
+\RequirePackage{tikz}
+\RequirePackage{listings}
+\RequirePackage{booktabs}
+\RequirePackage{lmodern}
+\usetikzlibrary{positioning,arrows.meta,calc,shapes.geometric}
+
+% ---------------------------------------------------------------------
+%  HHN-Farben
+% ---------------------------------------------------------------------
+\definecolor{hhnblue}{HTML}{002896}
+\definecolor{hhnbluemedium}{HTML}{667EC0}
+\definecolor{hhnbluelight}{HTML}{99A8D6}
+\definecolor{hhncyan}{HTML}{009FD5}
+\definecolor{hhnteal}{HTML}{009BA6}
+\definecolor{hhnpetrol}{HTML}{00727F}
+\definecolor{lightcyan}{HTML}{60C6EF}
+\definecolor{lightteal}{HTML}{7FCBD3}
+\definecolor{hhnorange}{HTML}{FF9E00}
+\definecolor{hhnyellow}{HTML}{FFCB0E}
+\definecolor{hhngreen}{HTML}{64B32C}
+\definecolor{hhnberry}{HTML}{AB0042}
+\definecolor{hhnpink}{HTML}{DC3769}
+\definecolor{darkgray}{HTML}{747474}
+\definecolor{lightgray}{HTML}{BCBCBC}
+\definecolor{cardbg}{HTML}{F2F5FB}
+
+% ---------------------------------------------------------------------
+%  Grundfarben des Themes
+% ---------------------------------------------------------------------
+\setbeamercolor{normal text}{fg=black!88,bg=white}
+\setbeamercolor{structure}{fg=hhnblue}
+\setbeamercolor{frametitle}{fg=hhnblue,bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=lightcyan}
+\setbeamercolor{alerted text}{fg=hhnberry}
+\setbeamercolor{example text}{fg=hhngreen}
+
+\setbeamercolor{itemize item}{fg=hhncyan}
+\setbeamercolor{itemize subitem}{fg=hhnteal}
+\setbeamercolor{itemize subsubitem}{fg=hhnpetrol}
+\setbeamercolor{enumerate item}{fg=hhnpetrol}
+
+\setbeamercolor{block title}{bg=hhnblue,fg=white}
+\setbeamercolor{block body}{bg=cardbg,fg=black!85}
+\setbeamercolor{block title alerted}{bg=hhnberry,fg=white}
+\setbeamercolor{block body alerted}{bg=hhnberry!8,fg=black!85}
+\setbeamercolor{block title example}{bg=hhngreen,fg=white}
+\setbeamercolor{block body example}{bg=hhngreen!10,fg=black!85}
+
+\setbeamercolor{footline}{fg=white,bg=hhnpetrol}
+\setbeamercolor{section in toc}{fg=hhnblue}
+\setbeamercolor{section number projected}{bg=hhncyan,fg=white}
+
+% ---------------------------------------------------------------------
+%  Fonts
+% ---------------------------------------------------------------------
+\setbeamerfont{title}{series=\bfseries,size=\LARGE}
+\setbeamerfont{subtitle}{series=\mdseries,size=\large}
+\setbeamerfont{frametitle}{series=\bfseries,size=\large}
+\setbeamerfont{footline}{size=\scriptsize}
+\setbeamerfont{block title}{series=\bfseries}
+
+% ---------------------------------------------------------------------
+%  Aufzaehlungszeichen
+% ---------------------------------------------------------------------
+\setbeamertemplate{itemize item}{\raisebox{0.18ex}{\scriptsize\textcolor{hhncyan}{$\blacksquare$}}}
+\setbeamertemplate{itemize subitem}{\raisebox{0.18ex}{\tiny\textcolor{hhnteal}{$\blacksquare$}}}
+\setbeamertemplate{itemize subsubitem}{\raisebox{0.15ex}{\tiny\textcolor{hhnpetrol}{$\bullet$}}}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{blocks}[rounded][shadow=false]
+\setbeamertemplate{sections/subsections in toc}[square]
+
+% ---------------------------------------------------------------------
+%  Frametitel mit Akzentlinie
+% ---------------------------------------------------------------------
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip
+  \vspace{0.55em}%
+  \begin{beamercolorbox}[wd=\paperwidth,leftskip=0.8cm,rightskip=0.8cm,sep=0pt]{frametitle}%
+    {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle}\par
+    \vspace{2pt}%
+    {\color{hhncyan}\rule{\dimexpr\paperwidth-1.6cm\relax}{1.1pt}}%
+  \end{beamercolorbox}%
+  \vspace{0.15em}%
+}
+
+% ---------------------------------------------------------------------
+%  Footline (schlanke Petrol-Leiste)
+% ---------------------------------------------------------------------
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox{%
+    \begin{beamercolorbox}[wd=.34\paperwidth,ht=2.6ex,dp=1.1ex,leftskip=0.6cm]{footline}%
+      \usebeamerfont{footline}\insertshortauthor%
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.50\paperwidth,ht=2.6ex,dp=1.1ex,center]{footline}%
+      \usebeamerfont{footline}\insertshorttitle%
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.16\paperwidth,ht=2.6ex,dp=1.1ex,rightskip=0.6cm]{footline}%
+      \hfill\usebeamerfont{footline}\insertframenumber\,/\,\inserttotalframenumber%
+    \end{beamercolorbox}%
+  }%
+  \vskip0pt%
+}
+
+% ---------------------------------------------------------------------
+%  Inhaltsverzeichnis-Eintraege
+% ---------------------------------------------------------------------
+\setbeamertemplate{section in toc}{%
+  \leavevmode\leftskip=0pt%
+  {\color{hhncyan}\small$\blacksquare$}~%
+  {\color{hhnblue}\inserttocsectionnumber.\ \inserttocsection}\par\smallskip%
+}
+
+% ---------------------------------------------------------------------
+%  Titelseite  (\hhntitleframe)
+% ---------------------------------------------------------------------
+\newcommand{\hhntitleframe}{%
+\begin{frame}[plain]
+  \begin{tikzpicture}[remember picture,overlay]
+    % Hintergrund
+    \fill[hhnblue] (current page.south west) rectangle (current page.north east);
+    % feine Akzentlinie auf vertikaler Mitte
+    \fill[hhncyan] (current page.west) rectangle ([yshift=1.6pt]current page.east);
+    % Kicker oben links
+    \node[anchor=north west,text width=.85\paperwidth] at ([xshift=0.9cm,yshift=-0.75cm]current page.north west){%
+      {\color{lightteal}\footnotesize\bfseries\MakeUppercase{\hhnkicker}}%
+    };
+    % Titel + Untertitel oberhalb der Linie
+    \node[anchor=south west,text width=.85\paperwidth] at ([xshift=0.9cm,yshift=0.5cm]current page.west){%
+      {\usebeamerfont{title}\color{white}\inserttitle\par}%
+      \vspace{0.32cm}%
+      {\usebeamerfont{subtitle}\color{lightcyan}\insertsubtitle\par}%
+    };
+    % Autor / Institut / Datum unterhalb der Linie
+    \node[anchor=north west,text width=.85\paperwidth] at ([xshift=0.9cm,yshift=-0.6cm]current page.west){%
+      {\color{white}\small\insertauthor\par}%
+      \vspace{3pt}%
+      {\color{hhnbluelight}\footnotesize\insertinstitute\par}%
+      \vspace{2pt}%
+      {\color{hhnbluelight}\footnotesize\insertdate\par}%
+    };
+  \end{tikzpicture}
+\end{frame}%
+}
+% Default-Kicker (kann ueberschrieben werden mit \renewcommand)
+\providecommand{\hhnkicker}{Forschungsinfrastruktur}
+
+% ---------------------------------------------------------------------
+%  Abschnittstrenner
+% ---------------------------------------------------------------------
+\AtBeginSection[]{%
+  \begin{frame}[plain]
+    \begin{tikzpicture}[remember picture,overlay]
+      \fill[hhnpetrol] (current page.south west) rectangle (current page.north east);
+      \fill[lightteal] (current page.west) rectangle ([yshift=1.6pt]current page.east);
+      \node[anchor=south west,text width=.85\paperwidth] at ([xshift=0.9cm,yshift=0.45cm]current page.west){%
+        {\color{lightteal}\large\bfseries Teil~\thesection}%
+      };
+      \node[anchor=north west,text width=.85\paperwidth] at ([xshift=0.9cm,yshift=-0.5cm]current page.west){%
+        {\color{white}\bfseries\LARGE \insertsection\par}%
+      };
+    \end{tikzpicture}
+  \end{frame}%
+}
+
+% ---------------------------------------------------------------------
+%  Listings-Stil
+% ---------------------------------------------------------------------
+% Eigene, garantiert vorhandene Sprachen (kein Verlass auf listings-Builtins)
+\lstdefinelanguage{myshell}{%
+  morekeywords={git,docker,pip,python,python3,source,xhost,ssh,cd,bash,sudo,apt-get,export},
+  morecomment=[l]{\#},
+  morestring=[b]",morestring=[b]',
+  sensitive=true,
+}
+\lstdefinelanguage{mydocker}{%
+  morekeywords={FROM,RUN,ENV,WORKDIR,COPY,CMD,ARG,ENTRYPOINT,LABEL,EXPOSE},
+  morecomment=[l]{\#},
+  morestring=[b]",
+  sensitive=true,
+}
+\lstdefinelanguage{myyaml}{%
+  morecomment=[l]{\#},
+  morestring=[b]',morestring=[b]",
+  sensitive=true,
+}
+
+\lstdefinestyle{hhn}{%
+  basicstyle=\ttfamily\scriptsize\color{black!85},
+  keywordstyle=\color{hhnblue}\bfseries,
+  commentstyle=\color{darkgray}\itshape,
+  stringstyle=\color{hhngreen},
+  numberstyle=\tiny\color{lightgray},
+  backgroundcolor=\color{cardbg},
+  frame=leftline,framerule=2pt,rulecolor=\color{hhncyan},
+  framesep=7pt,xleftmargin=12pt,aboveskip=0.6em,belowskip=0.4em,
+  breaklines=true,showstringspaces=false,tabsize=2,columns=fullflexible,
+  literate={ä}{{\"a}}1 {ö}{{\"o}}1 {ü}{{\"u}}1 {Ä}{{\"A}}1 {Ö}{{\"O}}1
+           {Ü}{{\"U}}1 {ß}{{\ss}}1 {→}{{$\rightarrow$}}1 {–}{{--}}1
+}
+\lstset{style=hhn}
+
+% ---------------------------------------------------------------------
+%  Hilfs-Makros
+% ---------------------------------------------------------------------
+\newcommand{\hl}[1]{\textcolor{hhnpetrol}{\textbf{#1}}}     % Hervorhebung
+\newcommand{\code}[1]{{\ttfamily\small\color{hhnblue}#1}}    % Inline-Code
+\newcommand{\warn}[1]{\textcolor{hhnberry}{\textbf{#1}}}     % Warnung/kritisch
+\newcommand{\good}[1]{\textcolor{hhngreen}{\textbf{#1}}}     % positiv
+
+% kleines "Kernaussage"-Block-Makro
+\newenvironment{takeaway}[1][Kernaussage]{%
+  \begin{block}{\textbf{#1}}}{\end{block}}
+
+\endinput
