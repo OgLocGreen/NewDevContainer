@@ -63,31 +63,64 @@ Der DevContainer bietet eine vollständig konfigurierte Entwicklungsumgebung, di
 
 ### Docker-Konfiguration
 
-Die Entwicklungsumgebung basiert auf dem offiziellen Python-Image. Die `Dockerfile` enthält:
+Die Entwicklungsumgebung basiert auf dem offiziellen NVIDIA-CUDA-Image. Die
+`Dockerfile` (maßgeblich ist `.devcontainer/Dockerfile`) ist aufgebaut um:
 
 ```dockerfile
-FROM python:3.9
+FROM nvidia/cuda:12.6.2-cudnn-devel-ubuntu24.04
 
-WORKDIR /workspace
+# System-Pakete: Python 3.12, git, Docker-CLI, X11, ffmpeg, ...
+# Node.js 20 (von der Claude-Code-CLI benötigt)
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Isoliertes virtualenv als Default-Interpreter
+RUN python3 -m venv /app/venv
+ENV VIRTUAL_ENV=/app/venv
+ENV PATH="/app/venv/bin:$PATH"
 
-# Weitere Konfigurationen...
+WORKDIR /app/new_dev_container
 ```
 
 ### Docker Compose
 
-Mit Docker Compose können mehrere Services einfach orchestriert werden:
+Docker Compose orchestriert den Container und (optional) GPU-Ressourcen. Zwei
+Profile sind enthalten:
+
+| Datei                                  | Wann verwenden                              |
+| -------------------------------------- | ------------------------------------------- |
+| `.devcontainer/docker-compose.yml`     | Mit NVIDIA-GPU + Treibern (Standard)        |
+| `.devcontainer/docker-compose.cpu.yml` | Reine Laptops, CI-Runner, Apple Silicon, … |
+
+GPU-Profil (Standard – vollständig in `.devcontainer/docker-compose.yml`):
 
 ```yaml
-version: '3'
 services:
-  app:
-    build: .
+  service_new_dev_container:
+    build:
+      context: .
     volumes:
-      - .:/workspace
-    # Weitere Konfigurationen...
+      - ${localWorkspaceFolder:-..}:/app/new_dev_container
+    shm_size: '32gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+```
+
+CPU-Profil – gleiches Image, ohne `deploy.resources`-GPU-Reservierung. Direkt
+starten mit:
+
+```bash
+docker compose -f .devcontainer/docker-compose.cpu.yml up
+```
+
+Oder VS Code darauf zeigen lassen, indem `.devcontainer/devcontainer.json`
+angepasst wird:
+
+```jsonc
+"dockerComposeFile": "docker-compose.cpu.yml"
 ```
 
 ## Python-Entwicklung
@@ -96,16 +129,26 @@ services:
 
 ```
 NewDevContainer/
-├── .claude/                        # Claude Code Team-Defaults (settings.json)
+├── .claude/                        # Claude Code Team-Defaults (settings, commands, skills)
+│   └── skills/
+│       └── package-docs/           # Lädt docs/package_a|b bei Bedarf
 ├── .devcontainer/                  # DevContainer-Konfiguration
-│   └── requirements.txt            # Dev-Time Python-Abhängigkeiten
+│   ├── Dockerfile                  # CUDA 12.6 + Python 3.12 Basis-Image
+│   ├── docker-compose.yml          # GPU-Profil (Standard)
+│   ├── docker-compose.cpu.yml      # CPU-only-Profil (Laptops / kein NVIDIA)
+│   └── requirements.txt            # Dev-Time Python-Abhängigkeiten (Basic AI Stack)
+├── .github/                        # GitHub Copilot Instructions und Prompt-Dateien
 ├── .vscode/                        # Gemeinsame VS Code Settings
 ├── src/                            # Quellcode
-├── data/                           # Beispieldaten
-├── docs/                           # Dokumentation / Cheat Sheets
+│   └── NewWandB/                   # Git-Submodul
+├── data/                           # Beispieldaten (keine großen Binaries)
+├── docs/                           # Dokumentation, Cheat Sheets, Templates
+│   ├── package_a/                  # Referenz für package_a (vom package-docs-Skill gelesen)
+│   └── package_b/                  # Referenz für package_b (vom package-docs-Skill gelesen)
 ├── CLAUDE.md                       # Kontext für Claude Code
-├── ReadMe.md                       # Diese Datei
-└── NewDevContainer.code-workspace         # VS Code Multi-Root Workspace
+├── ReadMe.md                       # Englische Variante
+├── ReadMe_ger.md                   # Diese Datei
+└── NewDevContainer.code-workspace  # VS Code Multi-Root Workspace
 ```
 
 ### Neues Python-Programm erstellen
@@ -126,11 +169,24 @@ NewDevContainer/
 
 ### Abhängigkeiten verwalten
 
-1. Neue Abhängigkeiten in `requirements.txt` hinzufügen
-2. Im Container Terminal ausführen:
+`.devcontainer/requirements.txt` enthält den Basic-AI-Stack (numpy, pandas,
+matplotlib, jupyterlab, scikit-learn, torch, transformers, streamlit, …) und
+zieht standardmäßig CPU-Wheels – funktioniert in beiden Compose-Profilen.
+
+1. Neue Abhängigkeiten in `.devcontainer/requirements.txt` hinzufügen
+2. Im Container-Terminal ausführen:
    ```bash
-   pip install -r requirements.txt
+   pip install -r .devcontainer/requirements.txt
    ```
+
+Für CUDA-12.6-Wheels von PyTorch (nur sinnvoll im GPU-Profil) nach der
+Basis-Installation überschreiben:
+
+```bash
+pip install --upgrade \
+    --index-url https://download.pytorch.org/whl/cu126 \
+    torch torchvision
+```
 
 ## AI Assistant Setup
 
@@ -269,72 +325,13 @@ Seit Template-Version 2 nutzt `docker-compose.yml` automatisch `${localWorkspace
       localWorkspaceFolder=/dein/pfad/zum/projekt docker compose up
 
 - **GPU-spezifische Einstellungen anpassen (optional)**
-Falls du keine NVIDIA-GPU hast, kommentiere folgende Bereiche in
-`docker-compose.yml` aus:
+Falls du keine NVIDIA-GPU hast, benutze das CPU-Profil statt die GPU-Datei
+manuell zu patchen: `devcontainer.json` auf `docker-compose.cpu.yml` zeigen
+lassen oder den Container direkt starten mit:
 
-      "#runtime: nvidia # NVIDIA-GPU verwenden"
-      "#command: >"
-      "# bash -c '/app/new_dev_container/.devcontainer/setup_startup.sh && bash'"
-      "#deploy:"
-      "# resources:"
-      "# reservations:"
-      "# devices:"
-      "# - driver: nvidia"
-      "# count: all"
-      "# capabilities: [gpu]"
-
-   Und in `.devcontainer/devcontainer.json`:
-
-      "// 'runArgs': ["
-      "// '--env', 'DISPLAY=$DISPLAY',"
-      "// '--runtime=nvidia',"
-      "// '--gpus', 'all'"
-      "// ],"
+      docker compose -f .devcontainer/docker-compose.cpu.yml up
 
 - **Container neu erstellen**
 Öffne in Visual Studio Code die Kommando-Palette ("F1" oder "Ctrl+Shift+P") und wähle:
 
    `Dev Containers: Rebuild and Reopen in Container`
-
-## AI Assistants (Claude Code + GitHub Copilot)
-
-This template ships with both assistants pre-wired so every new team member can
-pick their preferred workflow.
-
-### Claude Code
-- Installed automatically via the Dev Container feature
-  `ghcr.io/anthropics/devcontainer-features/claude-code:1`.
-- The `claude` CLI is available inside the container after the first rebuild.
-- Team defaults live in `.claude/settings.json` (model: `claude-sonnet-4-6`,
-  conservative tool-permission defaults).
-- Personal overrides go in `.claude/settings.local.json` (git-ignored).
-- Project context for the assistant is maintained in `CLAUDE.md` at repo root –
-  please keep it up to date when you change structure or conventions.
-- Launch: open a terminal in the container and run `claude`, or use the
-  VS Code extension `anthropic.claude-code`.
-
-### GitHub Copilot
-- Extensions `github.copilot` and `github.copilot-chat` are preinstalled.
-- Default settings (`.vscode/settings.json`) enable completions for Python,
-  YAML, Dockerfile and Markdown. Plaintext is disabled to reduce noise.
-- You need to sign in once with a GitHub account that has a Copilot license.
-
-Both tools can run in parallel – pick whatever fits the task.
-
-## AI Assistant Setup
-
-This template pre-configures AI coding assistants (GitHub Copilot and Claude Code)
-to use the project's coding rules automatically — no manual copy-paste needed.
-
-### How it works
-
-| Tool                   | Config File                       | What it does                                    |
-| ---------------------- | --------------------------------- | ----------------------------------------------- |
-| GitHub Copilot         | `.github/copilot-instructions.md` | Pre-prompt loaded automatically in every chat   |
-| GitHub Copilot         | `.vscode/settings.json`           | Injects `CodingRules.md` into code generation   |
-| Claude Code            | `CLAUDE.md`                       | Full project context + `@`-reference to rules   |
-| Custom GPT / Claude.ai | `docs/help/CustomGPT/`            | Standalone system prompts for external chatbots |
-
-### Single source of truth
-
-All AI tools point to the same rules file:

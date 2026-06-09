@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------------------
+# CPU-only Compose file for NewDevContainer.
+#
+# Use this on machines without an NVIDIA GPU (plain laptops, CI runners,
+# Apple Silicon Macs). Builds the same image as docker-compose.yml but
+# skips the nvidia/GPU reservation so Compose does not refuse to start.
+#
+# Standalone usage:
+#   docker compose -f .devcontainer/docker-compose.cpu.yml up
+#
+# VS Code Dev Container usage:
+#   Point devcontainer.json at this file:
+#       "dockerComposeFile": "docker-compose.cpu.yml"
+#   (or duplicate devcontainer.json into a second config that does so).
+# ---------------------------------------------------------------------------
+
+services:
+  service_new_dev_container:
+    build:
+      context: .
+    image: new_dev_container:latest
+    hostname: new_dev_container
+    network_mode: bridge
+    volumes:
+      - ${localWorkspaceFolder:-..}:/app/new_dev_container
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ~/.gitconfig:/etc/gitconfig:ro
+      - ~/.ssh:/root/.ssh:ro
+    environment:
+      - DISPLAY=${DISPLAY:-}
+    ports:
+      - "4010:4010"
+    stdin_open: true
+    tty: true
+    shm_size: '8gb'

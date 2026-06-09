@@ -32,13 +32,25 @@ The container will build automatically and install all system dependencies.
 
 ### 3. Install Python dependencies
 
-Inside the container terminal:
+`.devcontainer/setup_startup.sh` runs this automatically on first start, but
+you can rerun it any time inside the container terminal:
 
 ```bash
 pip install -r .devcontainer/requirements.txt
 ```
 
 The virtual environment is located at `/app/venv` and is activated automatically.
+
+The default stack is the basic AI/ML dev kit (`numpy`, `pandas`, `matplotlib`,
+`jupyterlab`, `scikit-learn`, `torch`, `transformers`, `streamlit`, …) and pulls
+CPU wheels — works on both compose profiles. For CUDA 12.6 PyTorch wheels (only
+useful on the GPU profile), override after the base install:
+
+```bash
+pip install --upgrade \
+    --index-url https://download.pytorch.org/whl/cu126 \
+    torch torchvision
+```
 
 ---
 
@@ -63,30 +75,65 @@ The Dev Container provides a fully configured development environment for VS Cod
 
 ### Docker Configuration
 
-The development environment is based on the official NVIDIA CUDA image. The `Dockerfile` contains:
+The development environment is based on the official NVIDIA CUDA image. The
+`Dockerfile` (see `.devcontainer/Dockerfile` for the full, authoritative version)
+is built around:
 
 ```dockerfile
-FROM nvidia/cuda:12.6.0-runtime-ubuntu22.04
+FROM nvidia/cuda:12.6.2-cudnn-devel-ubuntu24.04
 
-WORKDIR /app
+# System packages: Python 3.12, git, docker CLI, X11, ffmpeg, ...
+# Node.js 20 (required by the Claude Code CLI)
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Isolated virtualenv as the default interpreter
+RUN python3 -m venv /app/venv
+ENV VIRTUAL_ENV=/app/venv
+ENV PATH="/app/venv/bin:$PATH"
 
-# Further configuration...
+WORKDIR /app/new_dev_container
 ```
 
 ### Docker Compose
 
-Docker Compose orchestrates the container and GPU resources:
+Docker Compose orchestrates the container and (optionally) GPU resources. Two
+profiles are shipped:
+
+| File                                 | Use when                                 |
+| ------------------------------------ | ---------------------------------------- |
+| `.devcontainer/docker-compose.yml`     | You have an NVIDIA GPU + drivers (default) |
+| `.devcontainer/docker-compose.cpu.yml` | Plain laptop, CI runner, Apple Silicon, … |
+
+GPU profile (default — see `.devcontainer/docker-compose.yml` for the full
+version):
 
 ```yaml
 services:
-  app:
-    build: .
+  service_new_dev_container:
+    build:
+      context: .
     volumes:
-      - .:/app
-    # Further configuration...
+      - ${localWorkspaceFolder:-..}:/app/new_dev_container
+    shm_size: '32gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+```
+
+CPU profile — same image, no `deploy.resources` GPU reservation. Start it
+standalone with:
+
+```bash
+docker compose -f .devcontainer/docker-compose.cpu.yml up
+```
+
+Or point VS Code at it by editing `.devcontainer/devcontainer.json`:
+
+```jsonc
+"dockerComposeFile": "docker-compose.cpu.yml"
 ```
 
 ## Python Development
@@ -94,18 +141,27 @@ services:
 ### Project Structure
 
 ```
-NewSpace/
-├── .claude/                        # Claude Code team defaults (settings, commands)
+NewDevContainer/
+├── .claude/                        # Claude Code team defaults (settings, commands, skills)
+│   └── skills/
+│       └── package-docs/           # Loads docs/package_a|b on demand
 ├── .devcontainer/                  # Dev Container configuration
-│   └── requirements.txt            # Dev-time Python dependencies
+│   ├── Dockerfile                  # CUDA 12.6 + Python 3.12 base image
+│   ├── docker-compose.yml          # GPU profile (default)
+│   ├── docker-compose.cpu.yml      # CPU-only profile (laptops / no NVIDIA)
+│   └── requirements.txt            # Dev-time Python dependencies (basic AI stack)
 ├── .github/                        # GitHub Copilot instructions and prompt files
 ├── .vscode/                        # Shared VS Code settings
-├── src/                            # Source code
-├── data/                           # Sample datasets
-├── docs/                           # Documentation / cheat sheets
+├── src/                            # Application source code
+│   └── NewWandB/                   # Git submodule
+├── data/                           # Sample datasets (not for large binaries)
+├── docs/                           # Documentation, cheat sheets, templates
+│   ├── package_a/                  # Reference for package_a (read by package-docs skill)
+│   └── package_b/                  # Reference for package_b (read by package-docs skill)
 ├── CLAUDE.md                       # Context file for Claude Code
-├── ReadMe.md                       # This file
-└── newspace.code-workspace         # VS Code multi-root workspace
+├── ReadMe.md                       # This file (English)
+├── ReadMe_ger.md                   # German translation
+└── NewDevContainer.code-workspace  # VS Code multi-root workspace
 ```
 
 ### Creating a New Python Program
@@ -176,7 +232,7 @@ Both tools can run in parallel — pick whatever fits the task.
 
 All AI tools point to the same rules file:
 ```
-docs/CodingRules.md
+docs/help/Templates/CodingRules.md
 ```
 Update this file once and every assistant automatically follows the new rules.
 
@@ -291,7 +347,10 @@ python -m src.your_module
   ```
 
 - **GPU-specific settings (optional)**
-  If you don't have an NVIDIA GPU, comment out the GPU sections in `docker-compose.yml` and `.devcontainer/devcontainer.json` (marked with `# NVIDIA` comments in those files).
+  If you don't have an NVIDIA GPU, use the CPU profile instead of patching the
+  GPU file by hand: point `devcontainer.json` at
+  `docker-compose.cpu.yml`, or start the container standalone with
+  `docker compose -f .devcontainer/docker-compose.cpu.yml up`.
 
 - **Rebuild the container**
   Open the VS Code command palette (`F1` or `Ctrl+Shift+P`) and select:
