@@ -274,97 +274,58 @@ ssh -o StrictHostKeyChecking=accept-new -T git@github.com || true   # nur Info
 \end{frame}
 
 % =====================================================================
-\section{Verteiltes Arbeiten: Laptop $\leftrightarrow$ GPU-Server}
+\section{Verteiltes Arbeiten: Laptop \texorpdfstring{$\leftrightarrow$}{<->} GPU-Server}
 % =====================================================================
 \begin{frame}[fragile]{Denselben Container überall ausführen}
+  \textbf{Eine Container-Definition --- zwei typische Arbeitsweisen:}
+  \vspace{0.4em}
   \begin{columns}[T]
     \begin{column}{0.5\textwidth}
-      \textbf{Variante A --- alles remote}\\
-      Workspace \emph{und} Container auf dem GPU-Server (Remote-SSH +
-      ,,Reopen in Container``).
-      \vspace{0.5em}
-
-      \textbf{Variante B --- Code lokal, GPU remote}\\
-      Docker-Context über SSH: der Laptop behält den Code, der Container
-      läuft auf dem Server --- \hl{GPU ausleihen, ohne Code zu kopieren}.
+      \textbf{A. Alles auf dem GPU-Server}\\[2pt]
+      VS Code per Remote-SSH, dort ,,Reopen in Container``.
+      Code und Container leben dort, wo die GPU steht.
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{B. Code lokal, GPU remote}\\[2pt]
+      Code bleibt auf dem Laptop, der Docker-Daemon auf dem Server
+      übernimmt --- \hl{GPU ausleihen, ohne Code zu kopieren}.
 \begin{lstlisting}[language=myshell]
 docker context create gpu \
   --docker host=ssh://gpu-server
 docker context use gpu
 \end{lstlisting}
     \end{column}
-    \begin{column}{0.5\textwidth}
-      \textbf{Begleitende Host-Playbooks (\code{docs/help/NewPC/})}
-      \begin{itemize}
-        \item \hl{Multi-Remote-Git}: ein \code{git push all main}
-              $\rightarrow$ GitHub \emph{und} Uni-GitLab gleichzeitig.
-        \item \hl{eduVPN Split-Tunneling}: nur das Campus-Subnetz durch
-              den Tunnel (systemd-persistent).
-        \item \hl{SMB/CIFS-Auto-Mount}: \code{vers=3.0}, \code{nofail},
-              \code{x-systemd.automount}.
-      \end{itemize}
-      \begin{takeaway}
-        Das Template adressiert die reale Topologie einer Arbeitsgruppe ---
-        nicht nur die ideale Einzelmaschine.
-      \end{takeaway}
-    \end{column}
   \end{columns}
+  \vspace{0.2em}
+  \begin{takeaway}[Kerngedanke]
+    Dieselbe Umgebung auf Laptop, Workstation und geteiltem GPU-Server.
+    Begleitende Host-Setups (Multi-Remote-Git, eduVPN, SMB-Mounts)
+    liegen in \code{docs/help/NewPC/}.
+  \end{takeaway}
 \end{frame}
 
 % =====================================================================
-\section{Kritische Einordnung \& Roadmap}
+\section{Weiterentwicklung}
 % =====================================================================
-\begin{frame}{Ehrliche Bilanz}
-  \begin{columns}[T]
-    \begin{column}{0.46\textwidth}
-      \good{Stärken}
-      \begin{itemize}
-        \item Basis-Image am OS-Layer gepinnt
-        \item GPU + ML-Defaults out-of-the-box
-        \item KI-Tooling integriert \& geteilt
-        \item Remote-/Multi-Maschinen-fähig
-        \item Umfangreich dokumentiert
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.54\textwidth}
-      \warn{Offene Punkte (Roadmap)}
-      \begin{itemize}
-        \item \warn{Python-Deps nicht gelockt} (nur
-              \code{streamlit==1.42.2}) $\rightarrow$ Lockfile
-              (\code{uv}/\code{pip-tools}, Hashes).
-        \item \warn{Keine CI} $\rightarrow$ Actions: Image-Build,
-              \code{black}/\code{pylint}, \code{pytest}.
-        \item \warn{Doku-Drift}: ReadMe nennt CUDA 12.6.0/Ubuntu 22.04 \&
-              \code{python:3.9}; Submodul \code{src/Template} vs.\ Doku
-              \code{src/NewWandB}.
-        \item \warn{Kein CPU-Fallback}: \code{count: all} hart kodiert;
-              Doku verweist auf nicht existente \code{\#\,NVIDIA}-Marker.
-        \item \warn{Sicherheit auf geteilten Servern}: \code{docker.sock} +
-              ganzes \code{\textasciitilde/.ssh} gemountet, root im Container.
-      \end{itemize}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Konkrete nächste Schritte}
-  \begin{enumerate}
-    \item \hl{Lockfile einführen} --- repräsentativen Dev-Stack
-          (numpy, pandas, torch passend zu CUDA 12.6, pytest/black/pylint)
-          vollständig pinnen, mit Hashes.
-    \item \hl{Minimale CI} --- Image bauen, Format/Lint/Tests laufen lassen,
-          \code{main} mit Required-Checks schützen (macht die ,,getestet vor
-          Merge``-Regel real statt aspirativ).
-    \item \hl{Konsistenz-Pass} --- ReadMes aus den echten Dateien speisen,
-          Submodul-Namen vereinheitlichen, \code{.claude/worktrees/} aus der
-          Versionierung nehmen.
-    \item \hl{CPU-Profil} --- Compose-Profile oder
-          \code{docker-compose.cpu.yml}, damit auch reine Laptops starten.
-    \item \hl{Härtungsprofil} dokumentieren --- non-root-User mit Host-UID,
-          SSH-Agent-Forwarding statt \code{\textasciitilde/.ssh}-Mount,
-          \code{docker.sock} opt-in.
-    \item \hl{FAIR-Anker} --- \code{LICENSE}, \code{CITATION.cff},
-          Zenodo-DOI: vom Setup zum \emph{zitierbaren} Artefakt.
-  \end{enumerate}
+\begin{frame}{Das Template lebt von eurer Nutzung}
+  Das Template ist ein \hl{Ausgangspunkt, kein fertiges Produkt}.
+  Was sich im Alltag der Projekte als Reibung zeigt, gehört zurück ins Template.
+  \vspace{0.6em}
+  \begin{itemize}
+    \item \hl{Issues im GitLab} für alles, was hakt, fehlt oder besser gehen
+          könnte --- auch kleine Beobachtungen sind wertvoll.
+    \item \hl{Merge Requests willkommen} für Verbesserungen am Image,
+          an der Doku oder an den Begleit-Playbooks in \code{docs/help/}.
+    \item \hl{Mögliche Themen}, falls jemand einen Einstieg sucht:
+          Lockfile für die Python-Abhängigkeiten, CPU-Profil für Laptops
+          ohne GPU, Konsolidierung der ReadMes, Härtungsprofil für
+          geteilte Server.
+  \end{itemize}
+  \vfill
+  \begin{takeaway}
+    Je mehr Hände am Template, desto besser passt es auf die reale
+    Arbeit der Gruppe. Schaut rein, probiert aus, schlagt vor.
+  \end{takeaway}
 \end{frame}
 
 % =====================================================================
@@ -377,8 +338,8 @@ docker context use gpu
     \item \hl{Ein Klick} zur GPU-fähigen, KI-unterstützten Arbeitsumgebung,
           identisch auf jedem Host.
     \item \hl{Skaliert} über Laptops und geteilte GPU-Server hinweg.
-    \item Roadmap: \emph{Lockfile + CI + Doku-Konsolidierung + DOI} ---
-          von ,,reproduzierbar in der Absicht`` zu ,,maschinell verifiziert``.
+    \item \hl{Offen für Beiträge} --- das Template lebt von Issues und
+          Merge Requests aus den Projekten der Gruppe.
   \end{itemize}
   \vfill
   \begin{center}
