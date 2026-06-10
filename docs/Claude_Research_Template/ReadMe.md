@@ -147,69 +147,211 @@ Kein Reflex, keine Korrektur-Schleife — ein **Frühwarnsystem**, damit Chat-Re
 
 ## Realer Ablauf heute: was wirklich passiert
 
-Im Gegensatz zur Zukunftsvision in [`ReadMe_Future.md`](ReadMe_Future.md) zeigt dieses Diagramm **ausschließlich**, was heute existiert — keine geplanten Bausteine, keine Wunschverbindungen. Beide Maschinen erscheinen als parallele Lanes mit eigenem Zeitstrahl und eigener Farbe. Von oben nach unten: erst der Vault-Alltag mit Obsidian, Claude Desktop und MCP-Servern, dann der bewusste Maschinenwechsel des Users, dann die isolierte Coding-Session im DevContainer. Dass keine einzige Pfeillinie die Lane-Grenze überschreitet, ist die zentrale Aussage.
+Drei Diagramme, jedes für eine eigene Frage: **wo läuft was** auf der Vault-Maschine, **was steckt im DevContainer**, und **wie verläuft das `/push`-Ritual** Schritt für Schritt. Im Gegensatz zur Zukunftsvision in [`ReadMe_Future.md`](ReadMe_Future.md) zeigen alle drei **ausschließlich** Komponenten und Abläufe, die heute existieren. Die zentrale Aussage über die beiden Architekturen hinweg: zwischen Vault-Maschine und Dev-Maschine existiert kein einziger Pfeil — sie sind getrennte Welten, der User ist die einzige Verbindung.
+
+### Vault-Maschine: was heute wirklich da ist
+
+Die Vault-Maschine ist die heutige, real funktionierende Architektur auf dem persönlichen Laptop. Sie verbindet den Menschen über Obsidian und Claude Desktop mit dem lokalen OgVault — zusätzlich greift Claude über MCP-Server auf das Dateisystem und Zotero zu.
+
+```mermaid
+flowchart LR
+    subgraph VM["Vault-Maschine — persönlicher Laptop"]
+        User(("User"))
+        Obsidian["Obsidian<br/>(Desktop-Editor)"]
+        Claude["Claude Desktop"]
+        FSMCP["Filesystem<br/>MCP Server"]
+        ZotMCP["Zotero<br/>MCP Server"]
+        Zotero["Zotero (App)"]
+        OgVault[("OgVault")]
+    end
+
+    User <-->|"editiert"| Obsidian
+    Obsidian <-->|"liest & schreibt"| OgVault
+    User <-->|"Chat"| Claude
+    Claude -->|"MCP"| FSMCP
+    FSMCP <-->|"liest & schreibt"| OgVault
+    Claude -->|"MCP"| ZotMCP
+    ZotMCP -->|"Bibliographie"| Zotero
+
+    classDef live fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    classDef vault fill:#fff3cd,stroke:#856404,stroke-width:2px,color:#856404
+    classDef person fill:#e2e3ff,stroke:#3f3d99,stroke-width:2px,color:#1a1a4d
+
+    class Obsidian,Claude,FSMCP,ZotMCP,Zotero live
+    class OgVault vault
+    class User person
+```
+
+Grün markierte Knoten sind aktive Komponenten, die heute laufen. Gelb steht für den lokalen OgVault als zentraler Datenspeicher. Lila kennzeichnet den Menschen als Akteur. Alle Verbindungen existieren real — Obsidian liest und schreibt direkt im Vault, Claude Desktop greift über MCP-Server auf Dateisystem und Zotero zu.
+
+### Dev-Maschine: was im Container heute läuft
+
+Die Dev-Maschine besteht heute aus einem DevContainer mit Python 3.12 und CUDA 12.6, in dem Claude Code direkt mitläuft. Skills und Slash-Befehle arbeiten ausschließlich auf den Doc-Verzeichnissen und dem Projekt-Repo — kein MCP, kein Vault.
+
+```mermaid
+flowchart TD
+    User["User"]
+
+    subgraph DEV["Dev-Maschine - DevContainer im Repo"]
+        DC["DevContainer<br/>(Python 3.12 + CUDA 12.6, Docker)"]
+        CC["Claude Code<br/>(im Container, via DevContainer-Feature)"]
+        SK["package-docs Skill"]
+        CMD["Slash-Befehle:<br/>/spell-check<br/>/read-package-a<br/>/read-package-b"]
+        DA["docs/package_a/"]
+        DB["docs/package_b/"]
+        REPO["Projekt-Repo<br/>NewDevContainer<br/>(Container-Workspace)"]
+        NOTE["Hinweis:<br/>keine MCP-Server,<br/>kein Vault-Zugriff"]
+    end
+
+    User -->|"startet"| DC
+    DC -->|"enthaelt"| CC
+    User -->|"ruft Slash-Befehle auf"| CMD
+    CMD --> CC
+    CC -->|"laedt bei Bedarf"| SK
+    SK -.->|"liest"| DA
+    SK -.->|"liest"| DB
+    CC <-->|"edits und reads"| REPO
+    CC -.->|"Kontext"| NOTE
+
+    classDef devSide fill:#e8a87c,stroke:#8b4513,stroke-width:2px,color:#2b1810
+    classDef devDocs fill:#d4906a,stroke:#6b3410,stroke-width:1px,color:#2b1810
+    classDef devNote fill:#fff3e0,stroke:#a0522d,stroke-width:1px,color:#5c2e0a,font-style:italic
+    classDef userNode fill:#f5deb3,stroke:#8b4513,stroke-width:2px,color:#2b1810
+
+    class User userNode
+    class DC,CC,SK,CMD,REPO devSide
+    class DA,DB devDocs
+    class NOTE devNote
+```
+
+Warme Orange- und Brauntöne markieren die Dev-Seite: kräftiges Orange für aktive Komponenten (DevContainer, Claude Code, Skill, Slash-Befehle, Repo), gedämpftes Braun für die Doc-Verzeichnisse und ein heller Hinweis-Kasten, der die fehlende Verbindung zur Vault-Maschine sichtbar macht. Gestrichelte Pfeile kennzeichnen reine Lesezugriffe des Skills auf die Doc-Ordner sowie den Kontext-Hinweis.
+
+### `/push` — der Konsolidierungs-Fluss
+
+Das `/push`-Ritual ist der zentrale Schreibfluss vom Chat in den OgVault. Es läuft in fünf klar getrennten Schritten ab, mit expliziter Bestätigung pro Datei — und bricht sauber ab, wenn nichts zu konsolidieren ist.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant User as User
-    participant Obs as Obsidian
-    participant CD as ClaudeDesktop
-    participant Fs as FsMCP
-    participant Zot as ZotMCP
-    participant ZA as Zotero
-    participant Vault as OgVault
-    participant DC as DevContainer
-    participant CC as ClaudeCode
+    actor User
+    participant Claude
+    participant Vault as Vault OgVault
 
-    rect rgb(220, 235, 250)
-        Note over User,Vault: Vault-Maschine — Strategie und Notizen
-        User->>Obs: Notiz tippen in _PLAN.md
-        Obs->>Vault: Datei direkt speichern
-        User->>CD: "Lass uns Kapitel 3 planen"
-        CD->>Fs: Auto-Pull "lese kurz _PROJECT.md"
-        Fs->>Vault: _PROJECT.md lesen
-        Vault-->>CD: Inhalt zurück
-        User->>CD: /pull_keyword "Methode"
-        CD->>Fs: Keyword-Suche
-        Fs-->>CD: Treffer aus Scratch/
-        Note over User,CD: /push Ritual Schritt 1-5
-        CD->>User: Schritt 1 Recap + Schritt 2 Diff-Plan
-        User-->>CD: Schritt 3 Rückfragen klären, OK
-        loop Schritt 4 pro Datei
-            CD->>User: finalen Text/Diff zeigen
-            User-->>CD: OK für diese Datei
-            CD->>Fs: Datei schreiben
-            Fs->>Vault: write
+    User->>Claude: /push
+    Note over User,Vault: Schritt 1 - Recap
+    Claude->>Claude: Session zusammenfassen<br/>Entscheidungen, Insights,<br/>Planaenderungen, offene Punkte
+    Claude->>User: Recap zur Bestaetigung
+    User->>Claude: Bestaetigung oder Korrektur
+
+    alt Nichts Konsolidierungswuerdiges
+        Note over User,Vault: Leer-Push-Abzweig
+        Claude->>User: Nichts zu konsolidieren<br/>Ende ohne Pseudo-Push
+    else Inhalte vorhanden
+        Note over User,Vault: Schritt 2 - Vault-Diff-Plan
+        Claude->>Vault: Lese _PROJECT.md
+        Claude->>Vault: Lese _PLAN.md
+        Claude->>Vault: Lese _DECISIONS.md
+        Vault-->>Claude: Aktueller Stand
+        Claude->>User: Prosa-Plan der Aenderungen<br/>noch kein Schreiben
+
+        Note over User,Vault: Schritt 3 - Rueckfragen
+        Claude->>User: Wo gehoert es hin?<br/>z.B. Decision oder offene Ablation
+        User->>Claude: Antwort und Einordnung
+
+        Note over User,Vault: Schritt 4 - Schreiben
+        loop Pro Datei
+            Claude->>User: Finaler Text bzw. Diff
+            User->>Claude: Explizites OK
+            Claude->>Vault: Schreibe Datei
+            Vault-->>Claude: Bestaetigung
         end
-        CD->>User: Schritt 5 Closer + Next-Chat-Starter
-        User->>CD: /sync
-        CD->>Zot: Bibliothek abgleichen
-        Zot->>ZA: Items lesen
-        Zot-->>CD: Items zurück
-        CD->>Fs: Bibliography/_INDEX.md lesen
-        Fs-->>CD: Bib-Stand
-        CD->>User: Diff (Neu / Verwaist / Drift) pro Kategorie
-        User-->>CD: Bestätigung pro Kategorie
-        CD->>Fs: Bibliography/ aktualisieren
-        Fs->>Vault: Bib-Notizen schreiben
-    end
 
-    Note over User,CC: User wechselt Maschine — kein Kanal zwischen den Welten
-
-    rect rgb(245, 230, 220)
-        Note over User,CC: Dev-Maschine — Coding-Session
-        User->>DC: Container starten
-        DC->>CC: Claude Code im Container
-        User->>CC: /read-package-a
-        CC->>CC: docs/package_a/README.md lesen
-        CC-->>User: Antwort mit Package-Kontext
-        User->>CC: /spell-check ReadMe.md
-        CC-->>User: Korrigiertes Markdown
+        Note over User,Vault: Schritt 5 - Session-Closer
+        Claude->>User: Kurze Zusammenfassung<br/>+ Starter fuer naechsten Chat
     end
 ```
 
-Der **blaue Block** oben ist die **Vault-Maschine** mit Obsidian, Claude Desktop, den beiden MCP-Servern (Filesystem und Zotero), der Zotero-App und dem OgVault. Hier laufen die Lese-Rituale (Auto-Pull, `/pull_keyword`), das `/push`-Schreibritual mit seiner Pro-Datei-Schleife in Schritt 4 sowie der Zotero-Abgleich `/sync`. Die Note in der Mitte markiert den **Maschinenwechsel**. Der **orange Block** unten ist die **Dev-Maschine** mit DevContainer und Claude Code, die nur die lokalen Slash-Commands `/read-package-a` und `/spell-check` kennt. Zwischen den beiden Blöcken existiert heute **kein einziger Pfeil** — keine MCP-Brücke, kein gemeinsamer Mount, keine geteilte Datei. Der User ist die einzige Verbindung.
+Die `Note over`-Banner markieren die Schritt-Grenzen. Der `alt`-Zweig zeigt den **Leer-Push**: Claude sagt ehrlich Bescheid und beendet den Flow, statt einen Pseudo-Push zu inszenieren. Geschrieben wird ausschließlich in Schritt 4 — und immer erst nach explizitem OK pro Datei.
+
+### `/pull` — der Lese-Fluss
+
+Spiegelbild zu `/push`: alle Wege, auf denen Vault-Wissen in den Chat kommt. Der äußere `alt`-Block trennt **Auto-Pull** (Claude erkennt selbst, dass Vault-Wissen nötig ist) von **explizitem Pull** (User tippt einen Befehl). Innerhalb des expliziten Zweigs fächern sich die fünf Befehle in `alt`/`else` auf. Alle Pfade sind strikt read-only — kein Pull schreibt zurück, kein Pull blockiert das Gespräch.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Claude
+    participant Vault as Vault OgVault
+
+    User->>Claude: inhaltliche Frage / Anliegen
+
+    alt Auto-Pull: Claude erkennt Vault-Wissen noetig
+        Note over User,Vault: Auto-Pull-Pfad (transparent, ohne Befehl)
+        Claude->>User: Hinweis "lese kurz _PROJECT.md"
+        Claude->>Vault: Lese _PROJECT.md
+        Vault-->>Claude: Inhalt
+        opt weitere Files noetig
+            Claude->>Vault: Lese _PLAN.md / _DECISIONS.md / Subfiles
+            Vault-->>Claude: Inhalt
+        end
+        Claude->>User: Antwort mit Vault-Kontext
+
+    else Expliziter /pull-Befehl
+        Note over User,Vault: Explizite Lese-Varianten
+
+        alt /pull — voller Refresh
+            User->>Claude: /pull
+            Claude->>Vault: Lese parent _PROJECT.md, _PLAN.md, _DECISIONS.md
+            Claude->>Vault: Lese alle aktiven Subproject-Meta-Files
+            Vault-->>Claude: Alle Inhalte
+            Claude->>User: Voller Stand zusammengefasst
+
+        else /pull_path <pfad> — gezielt
+            User->>Claude: /pull_path <pfad>
+            opt Pfad mehrdeutig
+                Claude->>User: Liste der Treffer, welcher?
+                User->>Claude: Auswahl
+            end
+            opt Datei sehr gross
+                Claude->>User: Ganz oder bestimmter Abschnitt?
+                User->>Claude: Auswahl
+            end
+            Claude->>Vault: Lese Datei bzw. Abschnitt
+            Vault-->>Claude: Inhalt
+            Claude->>User: Inhalt im Chat
+
+        else /pull_keyword <term> — Volltextsuche
+            User->>Claude: /pull_keyword <term>
+            Claude->>Vault: Volltextsuche im aktuellen Projekt
+            Vault-->>Claude: Trefferliste mit Snippets
+            Claude->>User: Treffer, welche voll lesen?
+            User->>Claude: Auswahl
+            Claude->>Vault: Lese ausgewaehlte Dateien
+            Vault-->>Claude: Volltext
+            Claude->>User: Antwort mit Kontext
+
+        else /pull_subproject <name> — Subprojekt-Fokus
+            User->>Claude: /pull_subproject <name>
+            Claude->>Vault: Lese [Subproject]/_PLAN.md
+            opt Subproject _DECISIONS.md existiert
+                Claude->>Vault: Lese [Subproject]/_DECISIONS.md
+            end
+            Vault-->>Claude: Subprojekt-Stand
+            Claude->>User: Fokus auf Subprojekt gesetzt
+
+        else /where — Meta-Synthese
+            User->>Claude: /where
+            Claude->>Vault: Auto-Pull relevanter Meta-Files
+            Vault-->>Claude: Inhalte
+            Claude->>User: Synthese: wo stehen wir, was fehlt
+        end
+    end
+
+    Note over User,Vault: Alle Pull-Pfade sind strikt read-only
+```
+
+Auto-Pull ist der unsichtbare Default — kein Befehl nötig, nur ein transparenter Hinweis. Die expliziten Varianten unterscheiden sich darin, **was** sie lesen und **wie** sie sich bei Mehrdeutigkeit verhalten: `/pull` liest komplett, `/pull_path` gezielt mit Rückfrage bei mehrdeutigen Namen, `/pull_keyword` zeigt erst Trefferliste, `/pull_subproject` fokussiert auf eine Subprojekt-Mappe, `/where` liefert eine Meta-Synthese statt Rohdaten.
 
 ---
 

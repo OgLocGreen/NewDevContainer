@@ -14,7 +14,7 @@
 % --- Metadaten -------------------------------------------------------
 \renewcommand{\hhnkicker}{Forschungsinfrastruktur \textperiodcentered\ Template-Serie 2/2}
 \title{Ein disziplinierter KI-Forschungsassistent}
-\subtitle{Das Claude Project Template --- Wissensarchitektur, Rituale, Grounding}
+\subtitle{Das Claude Project Template --- Vault, Rituale, Grounding}
 \author{Christian Heinzmann}
 \institute{Hochschule Heilbronn \textperiodcentered\ Promotionskolleg}
 \date{\today}
@@ -30,9 +30,8 @@
   \tableofcontents
 \end{frame}
 
-% =====================================================================
 \section{Motivation: KI in der Promotion}
-% =====================================================================
+
 \begin{frame}{Zwei Versagensmodi von LLMs in der Forschung}
   \begin{columns}[T]
     \begin{column}{0.5\textwidth}
@@ -60,162 +59,320 @@
   \end{takeaway}
 \end{frame}
 
-% =====================================================================
-\section{Zwei Ebenen des Setups}
-% =====================================================================
-\begin{frame}{Zwei komplementäre Ebenen}
-  \begin{center}
-  \begin{tikzpicture}[font=\small,every node/.style={align=center}]
-    \node[rounded corners=3pt,fill=hhnbluelight!40,draw=hhnblue,line width=1pt,
-          text width=5.4cm,minimum height=2.6cm,anchor=north] (l1) at (-3.3,0)
-      {\textbf{\color{hhnblue}Ebene 1 --- im Repository}\\[2pt]
-       \scriptsize \emph{Der Agent beim Coden}\\[4pt]
-       \scriptsize \code{CLAUDE.md} \textperiodcentered\ \code{.claude/}
-       \textperiodcentered\ \code{.github/}\\
-       \scriptsize Konventionen, Permissions,\\Grounding-Skill};
-    \node[rounded corners=3pt,fill=lightteal!30,draw=hhnpetrol,line width=1pt,
-          text width=5.4cm,minimum height=2.6cm,anchor=north] (l2) at (3.3,0)
-      {\textbf{\color{hhnpetrol}Ebene 2 --- auf dem Desktop}\\[2pt]
-       \scriptsize \emph{Die Promotion als Wissenssystem}\\[4pt]
-       \scriptsize Claude Desktop + Obsidian + Zotero\\
-       \scriptsize Drei-Schienen-Architektur,\\Rituale, Personas};
-    \draw[{Stealth[length=2.5mm]}-{Stealth[length=2.5mm]},hhncyan,line width=1.2pt]
-      (l1.east) -- (l2.west) node[midway,above,font=\scriptsize\color{darkgray}]{wiki-update};
-  \end{tikzpicture}
-  \end{center}
-  \vspace{0.3em}
-  {\footnotesize Ebene 1 lebt im austauschbaren Code-Repo (Ausführung).
-  Ebene 2 ist das langlebige Gedächtnis (Strategie + Referenz). Sie koppeln
-  nur an definierten Punkten --- nie per Auto-Sync.}
+\section{Mentales Modell}
+
+\begin{frame}{Mentales Modell: Chat als Arbeitsplatz, Vault als Repository}
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize, node distance=2.2cm]
+
+  % Chat box (left) — flüchtig
+  \node[draw=hhnblue, fill=hhnbluelight!40, thick, rounded corners,
+        minimum width=4.6cm, minimum height=3.6cm, align=left] (chat) at (0,0)
+        {\textbf{\large Chat}\\[2pt]
+         {\color{hhnberry}\textbf{flüchtig}}\\[4pt]
+         $\bullet$ Brainstorming\\
+         $\bullet$ Diskutieren\\
+         $\bullet$ Iterieren\\
+         $\bullet$ Verwerfen erlaubt\\[3pt]
+         {\color{darkgray}\textit{kein kanonischer Zustand}}};
+
+  % Vault box (right) — persistent
+  \node[draw=hhnpetrol, fill=lightteal!30, thick, rounded corners,
+        minimum width=4.6cm, minimum height=3.6cm, align=left,
+        right=2.4cm of chat] (vault)
+        {\textbf{\large Vault}\\[2pt]
+         {\color{hhnpetrol}\textbf{persistent}}\\[4pt]
+         $\bullet$ \code{\_PROJECT.md}\\
+         $\bullet$ \code{\_PLAN.md}\\
+         $\bullet$ \code{\_DECISIONS.md}\\
+         $\bullet$ konsolidierte Zustände\\[3pt]
+         {\color{darkgray}\textit{Single Source of Truth}}};
+
+  % /push arrow (Chat -> Vault)
+  \draw[-{Latex[length=3mm]}, very thick, hhncyan]
+        ([yshift=6mm]chat.east) -- ([yshift=6mm]vault.west)
+        node[midway, above, font=\tiny, text=hhncyan]
+        {\textbf{/push} (5-Schritt-Ritual)};
+
+  % /pull arrow (Vault -> Chat)
+  \draw[-{Latex[length=3mm]}, very thick, hhngreen]
+        ([yshift=-6mm]vault.west) -- ([yshift=-6mm]chat.east)
+        node[midway, below, font=\tiny, text=hhngreen]
+        {\textbf{/pull}, Auto-Pull (read-only)};
+
+\end{tikzpicture}
+\end{center}
+
+\begin{takeaway}[Kernidee]
+Die Trennung ist Absicht. Ohne sie wird der Chat zu vorsichtig oder der Vault verstopft.
+\end{takeaway}
 \end{frame}
 
-% =====================================================================
-\section{Ebene 1: Das KI-bewusste Repository}
-% =====================================================================
-\begin{frame}{Ein Regelsatz, zwei Assistenten}
-  \begin{itemize}
-    \item \code{CLAUDE.md} wird von Claude Code \hl{automatisch geladen}:
-          Projektkontext, Naming-Tabelle, Docstring-Pflicht, Git-Workflow.
-    \item \hl{Single Source of Truth}: \code{CodingRules.md} wird per
-          \code{@}-Import in \code{CLAUDE.md} \emph{und} in
-          \code{copilot-instructions.md} eingebunden ---
-          Claude \& Copilot driften nie auseinander.
-    \item Jedes Claude-Artefakt hat einen \hl{Copilot-Zwilling}
-          (Slash-Command $\leftrightarrow$ prompt file),
-          dieselbe Logik in zwei Vendor-Formaten.
-  \end{itemize}
-  \vfill
-  \begin{center}
-  \begin{tikzpicture}[font=\scriptsize,every node/.style={align=center}]
-    \node[rounded corners=2pt,fill=hhnyellow!30,draw=hhnorange,line width=0.9pt,
-          text width=3.2cm,minimum height=0.9cm] (rules) at (0,0)
-      {\textbf{CodingRules.md}\\(eine Quelle)};
-    \node[rounded corners=2pt,fill=cardbg,draw=hhnblue,text width=4.0cm,minimum height=0.9cm]
-      (claude) at (-4.2,0) {\textbf{\color{hhnblue}Claude Code}\\{\ttfamily\scriptsize\color{hhnblue}CLAUDE.md}};
-    \node[rounded corners=2pt,fill=cardbg,draw=hhnpetrol,text width=4.0cm,minimum height=0.9cm]
-      (copilot) at (4.2,0) {\textbf{\color{hhnpetrol}Copilot}\\{\ttfamily\scriptsize\color{hhnpetrol}copilot-instructions.md}};
-    \draw[-{Stealth[length=2mm]},hhncyan,line width=1pt] (rules.west) -- (claude.east);
-    \draw[-{Stealth[length=2mm]},hhncyan,line width=1pt] (rules.east) -- (copilot.west);
-  \end{tikzpicture}
-  \end{center}
+\section{Vault als Single Source of Truth}
+
+\begin{frame}[fragile]{Vault-Struktur: was wo lebt}
+\begin{columns}[T,onlytextwidth]
+
+\begin{column}{0.42\textwidth}
+\textbf{\small Flache Projekt-Ablage}
+\begin{block}{}
+\begin{verbatim}
+Projects/[ProjectName]/
+|-- _PROJECT.md
+|-- _PLAN.md
+|-- _DECISIONS.md
+`-- Scratch/
+\end{verbatim}
+\end{block}
+
+\vspace{0.3em}
+{\scriptsize Hierarchisch mit Subprojekten möglich:\\
+Parent + \code{[Subproject\_A]/\_PLAN.md},\\
+Decisions zentral mit Tag.}
+\end{column}
+
+\begin{column}{0.58\textwidth}
+\textbf{\small Rollen pro Datei}
+\vspace{0.3em}
+
+{\scriptsize
+\begin{tabular}{@{}p{2.3cm}p{2.0cm}p{2.4cm}@{}}
+\toprule
+\textbf{Datei} & \textbf{Inhalt} & \textbf{Schreibrecht} \\
+\midrule
+\code{\_PROJECT.md} & Status + TODOs & Claude nur via \code{/push} \\
+\addlinespace[2pt]
+\code{\_PLAN.md} & Roadmap, Phasen, Risiken & Claude nur nach OK \\
+\addlinespace[2pt]
+\code{\_DECISIONS.md} & Append-only Log & neueste oben, append-only \\
+\addlinespace[2pt]
+\code{Scratch/} & Brainstorm, datierte Notizen & User \& Claude frei \\
+\addlinespace[2pt]
+\code{Bibliography/} & Paper-Notizen + \code{\_INDEX} & Claude via \code{/sync} \\
+\bottomrule
+\end{tabular}
+}
+\end{column}
+
+\end{columns}
+
+\vspace{0.5em}
+\begin{takeaway}[Klare Zuständigkeiten]
+Eine \hl{Single Source of Truth} pro Datei --- wer schreiben darf ist klar geregelt.
+\end{takeaway}
 \end{frame}
 
-\begin{frame}{Least-Privilege \& Grounding}
+\section{Konnektoren: MCP (Obsidian + Zotero)}
+
+\begin{frame}{Lokale, datensparsame Anbindung --- Vault-Maschine}
+  \begin{center}
+  \begin{tikzpicture}[
+    font=\scriptsize,
+    every node/.style={align=center},
+    comp/.style={rounded corners=3pt,draw=hhnblue,line width=0.8pt,
+                 fill=hhnbluelight!25,minimum height=0.85cm,inner sep=3pt,
+                 font=\scriptsize},
+    mcp/.style={rounded corners=3pt,draw=hhngreen!70!black,line width=0.8pt,
+                fill=hhngreen!18,minimum height=0.85cm,inner sep=3pt,
+                font=\scriptsize},
+    user/.style={circle,draw=hhnpetrol,line width=0.9pt,fill=lightteal!50,
+                 minimum size=1.1cm,font=\scriptsize\bfseries},
+    store/.style={cylinder,shape border rotate=90,aspect=0.25,
+                  draw=hhnpetrol,line width=0.9pt,fill=hhnteal!18,
+                  minimum height=1.1cm,minimum width=1.4cm,
+                  inner sep=2pt,font=\scriptsize},
+    ext/.style={rounded corners=3pt,draw=darkgray,line width=0.7pt,
+                fill=lightgray!25,minimum height=0.85cm,inner sep=3pt,
+                font=\scriptsize},
+    lbl/.style={font=\tiny\color{darkgray},inner sep=1pt},
+    bi/.style={{Stealth[length=2mm]}-{Stealth[length=2mm]},
+               hhncyan,line width=0.9pt},
+    uni/.style={-{Stealth[length=2mm]},hhnblue,line width=0.9pt},
+  ]
+    \node[rounded corners=6pt,draw=hhnpetrol,line width=0.9pt,
+          fill=cardbg,minimum width=12.2cm,minimum height=5.0cm,
+          anchor=north west] (box) at (0,0) {};
+    \node[anchor=north west,font=\scriptsize\bfseries\color{hhnpetrol}]
+      at ($(box.north west)+(0.25,-0.18)$)
+      {Vault-Maschine --- persoenlicher Laptop};
+    \node[user] (user) at (1.5,-2.6) {User};
+    \node[comp,text width=2.2cm] (obs) at (4.2,-1.7)
+      {Obsidian\\\tiny Desktop-Editor};
+    \node[comp,text width=2.2cm] (claude) at (4.2,-3.6)
+      {Claude Desktop};
+    \node[mcp,text width=2.2cm] (fs) at (7.4,-2.6)
+      {Filesystem\\MCP-Server};
+    \node[mcp,text width=2.2cm] (zmcp) at (7.4,-4.1)
+      {Zotero\\MCP-Server};
+    \node[store,text width=1.6cm] (vault) at (10.6,-2.1)
+      {OgVault};
+    \node[ext,text width=1.9cm] (zot) at (10.6,-4.1)
+      {Zotero\\\tiny App};
+    \draw[bi] (user) -- (obs) node[lbl,midway,sloped,above]{editiert};
+    \draw[bi] (user) -- (claude) node[lbl,midway,sloped,below]{Chat};
+    \draw[bi] (obs.east) -- (vault.west|-obs)
+      node[lbl,midway,above]{lokal};
+    \draw[uni] (claude.north east) -- (fs.south west)
+      node[lbl,midway,sloped,above]{MCP};
+    \draw[uni] (claude.east) -- (zmcp.west)
+      node[lbl,midway,above]{MCP};
+    \draw[bi] (fs.east) -- (vault.south-|fs.east) -- (vault.south)
+      node[lbl,pos=0.5,right]{liest \& schreibt};
+    \draw[uni] (zmcp) -- (zot) node[lbl,midway,above]{Bibliographie};
+  \end{tikzpicture}
+  \end{center}
+  \vspace{-0.2em}
   \begin{columns}[T]
     \begin{column}{0.5\textwidth}
-      \textbf{Gestufte Permissions} (\code{settings.json})
-      \begin{itemize}
-        \item \good{auto-erlaubt}: read-only/Dev ---
-              \code{git status/diff/log}, \code{python}, \code{pip},
-              \code{pytest}, \code{ls}, Read/Grep/Glob.
-        \item \warn{Bestätigung nötig}: \code{git push/reset/rebase},
-              \code{rm}, \code{docker}, \code{Write}, \code{Edit}.
-        \item Pro Command tool-scoped: ein Doc-Loader \emph{kann} keine
-              Dateien ändern.
-      \end{itemize}
+      {\footnotesize \textbf{Obsidian-MCP}: Filesystem (Default, kein Plugin)
+      oder Local REST API (Dataview, Ports 27124/27123).\\
+      \textbf{Zotero}: \code{ZOTERO\_LOCAL=true}, Embeddings via
+      all-MiniLM-L6-v2 --- \hl{keine Daten verlassen die Maschine}.}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \textbf{\code{package-docs}-Skill (anti-hallucination)}
-      \begin{itemize}
-        \item Modell-getriggert über das \code{description}-Feld
-              (auch bei Fehler-Tracebacks).
-        \item Disziplin: README-Index zuerst, nur 1--2 gezielte Dateien
-              laden, API-Signaturen \hl{wörtlich zitieren}, Quelle als
-              \code{datei:zeile}.
-        \item Harte Regel: \warn{,,Never invent APIs --- frag nach``}.
-      \end{itemize}
-      \begin{takeaway}
-        Antworten werden \hl{geerdet} und copy-paste-sicher.
-      \end{takeaway}
+      {\footnotesize \warn{Footguns:} \code{zotero-mcp-server} (54yyyu)
+      installieren, \warn{nicht} \code{zotero-mcp} (scheitert stumm);
+      MSIX-Config unter \code{\%LOCALAPPDATA\%\textbackslash...},
+      Auto-Setup schreibt in den falschen klassischen Pfad.}
     \end{column}
   \end{columns}
 \end{frame}
 
-% =====================================================================
-\section{Ebene 2: Die Drei-Schienen-Wissensarchitektur}
-% =====================================================================
-\begin{frame}{Drei Schienen, die nicht auto-synchronisieren}
+\section{Rituale}
+
+\begin{frame}{\code{/push} --- der Konsolidierungs-Fluss}
+  \begin{columns}[T]
+    \begin{column}{0.42\textwidth}
+      \good{5-Schritt-Ritual, pro Datei bestätigt}
+      \begin{enumerate}
+        \item \hl{Recap} --- Session zusammenfassen
+        \item \hl{Diff-Plan} --- lesen, in Prosa beschreiben
+        \item \hl{Klärung} --- Rückfragen
+        \item \hl{Schreiben} --- pro Datei: Diff $\rightarrow$ OK $\rightarrow$ write
+        \item \hl{Closer} --- Summary + Next-Chat-Starter
+      \end{enumerate}
+      \vspace{0.2em}
+      \warn{Leer-Push:} nichts konsolidierungswürdig $\rightarrow$ Ende, kein Pseudo-Push.
+    \end{column}
+    \begin{column}{0.58\textwidth}
+      \begin{tikzpicture}[
+        font=\tiny,
+        phase/.style={rounded corners=2pt,fill=hhnbluelight!40,draw=hhnblue,line width=0.7pt,text width=1.55cm,minimum height=1.25cm,align=center,inner sep=1.5pt},
+        phaseloop/.style={rounded corners=2pt,fill=lightcyan!60,draw=hhnblue,line width=0.9pt,text width=1.55cm,minimum height=1.25cm,align=center,inner sep=1.5pt},
+        flow/.style={-{Stealth[length=1.6mm]},hhncyan,line width=0.9pt},
+        endnode/.style={rounded corners=2pt,fill=hhnberry!15,draw=hhnberry,line width=0.6pt,text width=1.55cm,minimum height=0.45cm,align=center,font=\tiny,inner sep=1pt},
+        num/.style={circle,fill=hhnblue,text=white,inner sep=0pt,minimum size=3.2mm,font=\tiny\bfseries}
+      ]
+        \node[phase] (p1) at (0,0) {\textbf{Recap}\\\tiny Session-Summary};
+        \node[phase,right=0.18cm of p1] (p2) {\textbf{Diff-Plan}\\\tiny vs.\ \_PROJECT};
+        \node[phase,right=0.18cm of p2] (p3) {\textbf{Klärung}\\\tiny Rückfragen};
+        \node[phaseloop,right=0.18cm of p3] (p4) {\textbf{Schreiben}\\\tiny pro Datei OK};
+        \node[phase,right=0.18cm of p4] (p5) {\textbf{Closer}\\\tiny Next-Chat};
+        \node[num,anchor=north west] at ([xshift=1pt,yshift=-1pt]p1.north west) {1};
+        \node[num,anchor=north west] at ([xshift=1pt,yshift=-1pt]p2.north west) {2};
+        \node[num,anchor=north west] at ([xshift=1pt,yshift=-1pt]p3.north west) {3};
+        \node[num,anchor=north west] at ([xshift=1pt,yshift=-1pt]p4.north west) {4};
+        \node[num,anchor=north west] at ([xshift=1pt,yshift=-1pt]p5.north west) {5};
+        \draw[flow] (p1) -- (p2);
+        \draw[flow] (p2) -- (p3);
+        \draw[flow] (p3) -- (p4);
+        \draw[flow] (p4) -- (p5);
+        \draw[-{Stealth[length=1.4mm]},hhnblue,line width=0.7pt]
+          ([xshift=-3mm,yshift=2mm]p4.north) arc[start angle=200,end angle=-20,radius=2.5mm];
+        \node[font=\tiny\bfseries,hhnblue,above=1.8mm of p4.north,inner sep=0pt] {loop};
+        \node[below=0.7mm of p4,text width=1.8cm,align=center,font=\tiny\bfseries,hhnpetrol]
+          {User bestätigt\\pro Datei};
+        \node[endnode,below=6mm of p1] (empty) {Leer-Push\\$\rightarrow$ Ende};
+        \draw[-{Stealth[length=1.6mm]},hhnberry,line width=0.7pt,dashed]
+          (p1.south) -- (empty.north)
+          node[midway,right,font=\tiny,hhnberry]{nichts};
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{\code{/pull} --- Lesen ist frei}
   \begin{center}
-  \begin{tikzpicture}[font=\scriptsize,every node/.style={align=center}]
-    \tikzset{lane/.style={rounded corners=3pt,line width=1pt,text width=3.5cm,
-                          minimum height=3.0cm,anchor=north}}
-    \node[lane,fill=hhnbluelight!35,draw=hhnblue] (s) at (-4.4,0)
-      {\textbf{\color{hhnblue}Strategie}\\[3pt]
-       \emph{OgVault} (Obsidian)\\[4pt]
-       \code{\_PROJECT}\\\code{\_PLAN}\\\code{\_DECISIONS}\\[4pt]
-       \scriptsize mehrmals/Woche};
-    \node[lane,fill=lightteal!30,draw=hhnpetrol] (r) at (0,0)
-      {\textbf{\color{hhnpetrol}Referenz}\\[3pt]
-       \emph{og-wiki} (Git-Repo)\\[4pt]
-       concepts/\\papers/\\projects/\\[4pt]
-       \scriptsize wöchentlich};
-    \node[lane,fill=hhnyellow!25,draw=hhnorange] (e) at (4.4,0)
-      {\textbf{\color{hhnorange!80!black}Ausführung}\\[3pt]
-       \emph{DevContainer-Repos}\\[4pt]
-       austauschbar\\Code + Claude Code\\[4pt]
-       \scriptsize projektabhängig};
-    \draw[-{Stealth[length=2mm]},hhncyan,line width=1pt,dashed]
-      (s.south) to[bend right=18] node[below,font=\tiny\color{darkgray}]{TODO bei Repo-Start} (e.south);
-    \draw[-{Stealth[length=2mm]},hhngreen,line width=1.3pt]
-      (e.north) to[bend right=18] node[above,font=\tiny\color{darkgray}]{wiki-update} (r.north);
-    \draw[-{Stealth[length=2mm]},hhnblue,line width=1.3pt]
-      (s.east) -- node[above,font=\tiny\color{darkgray}]{/wiki-realign} (r.west);
+  \begin{tikzpicture}[
+    font=\scriptsize,
+    every node/.style={align=center},
+    card/.style={rounded corners=2pt,draw=hhnblue,fill=hhnbluelight!25,line width=0.6pt,text width=2.1cm,minimum height=1.0cm,inner sep=2pt,font=\tiny},
+    autobox/.style={rounded corners=3pt,fill=hhngreen!15,draw=hhngreen,line width=1pt,text width=4.5cm,minimum height=2.6cm,inner sep=4pt},
+    explbox/.style={rounded corners=3pt,fill=hhnbluelight!40,draw=hhnblue,line width=1pt,text width=7.4cm,minimum height=2.7cm,inner sep=4pt},
+    header/.style={font=\scriptsize\bfseries\color{hhnblue}},
+    greenhead/.style={font=\scriptsize\bfseries\color{hhngreen!60!black}}
+  ]
+    \node[font=\scriptsize\bfseries\color{darkgray}] (root) at (0,0.45) {\code{/pull} (Lese-Fluss)};
+    \node[autobox,anchor=north east] (auto) at (-0.15,-0.1) {};
+    \node[greenhead,anchor=north] at ([yshift=-3pt]auto.north) {Auto-Pull (implizit)};
+    \node[font=\tiny,text width=4.2cm,anchor=north] at ([yshift=-16pt]auto.north)
+      {Claude erkennt Vault-Bedarf, meldet transparent \textit{lese kurz X}, liest \code{\_PROJECT.md} $\rightarrow$ bei Bedarf \code{\_PLAN.md} und \code{\_DECISIONS.md}.};
+    \node[explbox,anchor=north west] (expl) at (0.15,-0.1) {};
+    \node[header,anchor=north] at ([yshift=-3pt]expl.north) {Expliziter Pull (User-Befehl)};
+    \node[card,anchor=north west] (c1) at ([xshift=5pt,yshift=-17pt]expl.north west)
+      {\textbf{\color{hhnblue}/pull}\\[1pt]voller Refresh,\\parent + aktive Subprojekte};
+    \node[card,right=3pt of c1] (c2)
+      {\textbf{\color{hhnblue}/pull\_path}\\[1pt]gezielter Pfad,\\R\"uckfrage bei Unklarheit};
+    \node[card,right=3pt of c2] (c3)
+      {\textbf{\color{hhnblue}/pull\_keyword}\\[1pt]Volltextsuche,\\Trefferliste $\rightarrow$ Auswahl};
+    \node[card,below=3pt of c1.south,anchor=north] (c4)
+      {\textbf{\color{hhnblue}/pull\_subproject}\\[1pt]Subproject/\_PLAN.md\\(+ opt. \_DECISIONS.md)};
+    \node[card,right=3pt of c4] (c5)
+      {\textbf{\color{hhnblue}/where}\\[1pt]Meta-Synthese\\\"uber Vault-Struktur};
+    \draw[-{Stealth[length=2mm]},hhngreen,line width=1pt] (root.south) to[bend right=18] (auto.north);
+    \draw[-{Stealth[length=2mm]},hhnblue,line width=1pt] (root.south) to[bend left=18] (expl.north);
+    \node[rounded corners=2pt,fill=hhnpetrol!15,draw=hhnpetrol,line width=0.6pt,inner sep=3pt,font=\scriptsize\bfseries\color{hhnpetrol},anchor=north]
+      at (0,-3.25)
+      {Alle Pull-Pfade sind strikt read-only};
   \end{tikzpicture}
   \end{center}
-  \vspace{0.2em}
-  {\footnotesize \hl{Prinzip:} Strategie lebt einmal und entwickelt sich;
-  Referenz wächst und wird nachgeschlagen; Ausführung kommt, macht ihren Job,
-  geht. \hl{Ein Repo darf sterben --- das Wissen lebt im Wiki und Vault weiter.}}
+  \vspace{0.1em}
+  {\footnotesize Das Lese-Ritual ist die risikolose Hälfte der Asymmetrie:
+  \hl{Auto-Pull} kümmert sich im Hintergrund, \hl{expliziter Pull}
+  erlaubt gezielten Zugriff --- nichts davon schreibt zurück.}
 \end{frame}
 
-% =====================================================================
-\section{Rituale \& asymmetrisches Schreiben}
-% =====================================================================
-\begin{frame}{Jede Kopplung ist ein bewusstes Ritual}
-  \begin{itemize}
-    \item \hl{\code{/push}} --- Chat $\rightarrow$ OgVault. Fünf Schritte:
-          Recap $\rightarrow$ Diff-Plan $\rightarrow$ Klärung $\rightarrow$
-          Schreiben (pro Datei bestätigt) $\rightarrow$ Session-Closer.
-    \item \hl{\code{wiki-update}} --- Repo $\rightarrow$ Wiki. Pro
-          Coding-Session; \code{.manifest.json} fürs Delta-Tracking;
-          endet mit \code{git push}.
-    \item \hl{\code{/wiki-realign}} --- OgVault $\rightarrow$ Wiki.
-          \warn{Nur} bei Strategiewechsel, \warn{nie} automatisch ---
-          Vorschlag, dann Bestätigung.
-    \item \hl{Wiki $\rightarrow$ OgVault} --- selten, beim periodischen
-          Review, via \code{/push}.
+\begin{frame}{\code{/sync} \& Drift-Check --- die kleinen Wartungs-Rituale}
+\begin{columns}[T,onlytextwidth]
+
+\begin{column}{0.48\textwidth}
+\textbf{\code{/sync} --- Zotero $\leftrightarrow$ Obsidian}
+\begin{itemize}\scriptsize
+  \item \hl{Vertrauenshierarchie:} Zotero = Master für \hl{Metadaten}, Obsidian = Master für \hl{Notizen}.
+  \item Diff-basiert, drei Kategorien:
+  \begin{itemize}\scriptsize
+    \item \good{Neu in Zotero} --- Note anlegen?
+    \item \warn{Verwaist in Obsidian} --- nur melden
+    \item \hl{Metadata-Drift} --- Felder angleichen?
   \end{itemize}
-  \vfill
-  \begin{takeaway}[Asymmetrie]
-    \hl{Lesen ist frei} (Auto-Pull, risikolos), \hl{Schreiben nur über das
-    bestätigte \code{/push}}. So bleibt Brainstorming uninhibiert und der Vault
-    sauber --- \emph{Human-in-the-loop write control}.
-  \end{takeaway}
+  \item Pro Kategorie \hl{nachfragen}, erst nach Bestätigung anwenden.
+  \item \warn{Nie} Push Obsidian $\rightarrow$ Zotero.
+  \item \warn{Nie} automatisches Löschen verwaister Notizen.
+\end{itemize}
+\end{column}
+
+\begin{column}{0.48\textwidth}
+\textbf{Drift-Check --- zyklisch}
+\begin{itemize}\scriptsize
+  \item Alle \hl{3--4 substantielle Wechsel}, nicht pro Turn.
+  \item Kompakter Cross-Check:\\
+        \emph{,,wir haben A, B diskutiert, Vault hat X. Drift-Beobachtung: [\ldots]``}
+  \item \hl{Frühwarnsystem} --- kein Reflex, kein Nagging.
+  \item Bei laufendem Gedankengang: \hl{bis zur nächsten Pause verschieben}.
+  \item Ziel: Chat-Realität und Vault-Stand bleiben \good{deckungsgleich}.
+\end{itemize}
+\end{column}
+
+\end{columns}
+
+\vspace{0.4em}
+\begin{takeaway}[Kernidee]
+Beide Rituale halten Chat-Realität und Vault-Stand sauber synchron --- ohne den Flow zu unterbrechen.
+\end{takeaway}
 \end{frame}
 
-% =====================================================================
-\section{Schutzmechanismen gegen Halluzination \& Entropie}
-% =====================================================================
+\section{Schutzmechanismen}
+
 \begin{frame}{Guardrails, die Vertrauen erzeugen}
   \begin{columns}[T]
     \begin{column}{0.5\textwidth}
@@ -230,28 +387,27 @@
     \end{column}
     \begin{column}{0.5\textwidth}
       \begin{itemize}
-        \item \hl{Drift-Check} alle 3--4 Austausche --- passives
-              Frühwarnsystem, kein Nagging, verschiebt sich bei laufendem
-              Gedanken.
         \item \hl{Vertrauenshierarchie} bei \code{/sync}: Zotero = Master
               für Metadaten, Obsidian = Master für Notizen.
         \item \hl{Nie Zitate erfinden} --- explizite Regel im System-Prompt.
+        \item \hl{Schreiben nur via /push}, pro Datei bestätigt --- der
+              Vault bleibt vertrauenswürdig.
       \end{itemize}
     \end{column}
   \end{columns}
   \vfill
   {\footnotesize Zweisprachig nach Design: \hl{Konversation Deutsch}, aber
-  \hl{aller akademischer Inhalt Englisch} (RQs, Titel, Definitionen, Code) ---
+  \hl{aller akademischer Inhalt Englisch} (RQs, Titel, Definitionen) ---
   und LaTeX immer als \code{.tex}-Quelle mit Versionsmarken.}
 \end{frame}
 
-% =====================================================================
-\section{Die Dr.-Personas}
-% =====================================================================
-\begin{frame}{Modulare Rollen-Prompts}
+\section{Dr.-Personas}
+
+\begin{frame}{Modulare Rollen-Prompts (Dr.-Personas)}
   \begin{itemize}
     \item Orthogonale, ladbare Session-Modi (\hl{eine pro Session}),
           per natürlichem Trigger ,,Lade Dr.\ X``.
+    \item Funktionieren \hl{unabhängig vom Vault}: kein MCP, kein Projekt.
   \end{itemize}
   \vspace{0.3em}
   \begin{center}
@@ -264,109 +420,114 @@
     \textbf{\color{hhnblue}Dr. Code} & Vollständige, dokumentierte Dateien +
       README, Doxygen-Docstrings, Typ-Hints, Versionschecks. \\
     \textbf{\color{hhnblue}Dr. Analyse} & Psychologische Text-/E-Mail-Optimierung
-      aus vier Leserperspektiven (Empfänger, Autor, PR, Worst-Case). \\
+      mit konkretem Verbesserungsvorschlag. \\
     \textbf{\color{hhnblue}Dr. Mail} & Schlanke formale E-Mail-Korrektur ---
       Grammatik/Stil, ohne den Inhalt zu verändern. \\
     \bottomrule
   \end{tabular}
   \end{center}
   \vspace{0.3em}
-  {\footnotesize Persistiert über drei Claude-\emph{Memory-Edits} (Workflow,
-  Vault-Pfad, Persona-Trigger) --- überlebt Sessions ohne erneutes Einfügen.
-  Teilbar mit Studierenden und Kolleg:innen.}
+  {\footnotesize Teilbar mit Kolleg:innen --- jeder Prompt steht für sich.}
 \end{frame}
 
-% =====================================================================
-\section{Konnektoren: MCP (Obsidian + Zotero)}
-% =====================================================================
-\begin{frame}{Lokale, datensparsame Anbindung}
-  \begin{columns}[T]
-    \begin{column}{0.5\textwidth}
-      \textbf{Obsidian --- zwei Varianten}
-      \begin{itemize}
-        \item \good{A: Filesystem-MCP} (Default) --- kein Plugin,
-              reines Markdown, Obsidian muss nicht laufen.
-        \item \good{B: Local REST API} --- Dataview/Backlinks/Tags,
-              Ports 27124/27123, Obsidian muss laufen.
-      \end{itemize}
-      \textbf{Zotero}
-      \begin{itemize}
-        \item \code{ZOTERO\_LOCAL=true} --- lokal, Embeddings via
-              all-MiniLM-L6-v2: \hl{keine Daten verlassen die Maschine}.
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \textbf{Dokumentierte Footguns}
-      \begin{itemize}
-        \item \warn{\code{zotero-mcp-server}} (von 54yyyu) installieren ---
-              \warn{nicht} \code{zotero-mcp}; beide existieren und liefern
-              dieselbe CLI, der falsche scheitert \emph{stumm}.
-        \item MSIX-Config liegt unter
-              \code{\%LOCALAPPDATA\%\textbackslash...} ---
-              das Auto-Setup schreibt in den falschen klassischen Pfad.
-      \end{itemize}
-      \begin{takeaway}
-        Voraussetzung: mind.\ Claude Pro; MCP nur Desktop/Web, nicht mobil.
-      \end{takeaway}
-    \end{column}
-  \end{columns}
+\section{Ausblick \& Bilanz}
+
+\begin{frame}{Ausblick: geplante Wiki-Schiene (SOLL)}
+\begin{center}
+\begin{tikzpicture}[
+    font=\scriptsize,
+    lane/.style={draw=hhnblue, rounded corners=2pt, minimum width=3.6cm, minimum height=2.4cm, align=center, fill=cardbg, thick},
+    planlane/.style={draw=hhnpetrol, dashed, rounded corners=2pt, minimum width=3.6cm, minimum height=2.4cm, align=center, fill=lightteal, thick},
+    arrow/.style={-Stealth, hhnpetrol, dashed, thick},
+    header/.style={font=\scriptsize\bfseries}
+]
+
+\node[lane] (strat) at (0,0) {%
+    \textbf{\textcolor{hhnblue}{Strategie}}\\[2pt]
+    OgVault (Obsidian)\\[3pt]
+    \textcolor{hhngreen}{\textbf{IST}}\\
+    \scriptsize laeuft heute
+};
+
+\node[planlane, right=0.6cm of strat] (ref) {%
+    \textbf{\textcolor{hhnpetrol}{Referenz}}\\[2pt]
+    \code{og-wiki} Repo\\[3pt]
+    \textcolor{hhnpetrol}{\textbf{SOLL, geplant}}\\
+    \scriptsize kuratierte Quellen
+};
+
+\node[lane, right=0.6cm of ref] (exec) {%
+    \textbf{\textcolor{hhnblue}{Ausfuehrung}}\\[2pt]
+    beliebige Code-Repos\\[3pt]
+    \textcolor{hhngreen}{\textbf{IST}}\\
+    \scriptsize heute isoliert
+};
+
+\draw[arrow] (exec.north) to[bend right=25] node[above, font=\tiny, text=hhnpetrol] {\code{wiki-update} (geplant)} (ref.north);
+\draw[arrow] (strat.south) to[bend right=25] node[below, font=\tiny, text=hhnpetrol] {\code{/wiki-realign} (geplant)} (ref.south);
+
+\end{tikzpicture}
+\end{center}
+
+\vspace{-2pt}
+\begin{itemize}
+    \itemsep1pt
+    \item \textbf{Heute:} Strategie-Schiene (Vault) laeuft, Ausfuehrungs-Schiene existiert isoliert.
+    \item \textbf{Geplant:} kuratiertes \code{og-wiki}-Repo als gemeinsame Referenz, \code{wiki-update} als Repo$\to$Wiki-Bruecke, \code{/wiki-realign} bei Strategiewechseln.
+    \item Heute leistet das der Mensch durch \code{/push} und manuelles Copy-Paste.
+\end{itemize}
+
+\begin{takeaway}[Stand heute]
+Volle Vision in \code{ReadMe\_Future.md} --- heutiger Stand: bewusst klein und sauber.
+\end{takeaway}
 \end{frame}
 
-% =====================================================================
-\section{Kritische Einordnung \& Roadmap}
-% =====================================================================
-\begin{frame}[shrink]{Ehrliche Bilanz}
+\begin{frame}{Ehrliche Bilanz}
   \begin{columns}[T]
-    \begin{column}{0.44\textwidth}
+    \begin{column}{0.5\textwidth}
       \good{Stärken}
       \begin{itemize}
         \item Struktur gegen Wissens-Entropie
         \item Grounding gegen Halluzination
         \item Human-in-the-loop-Schreiben
-        \item Vendor-agnostisch (Claude + Copilot)
-        \item Lokal \& datensparsam
+        \item Lokal \& datensparsam (MCP)
+        \item Dr.-Personas als kleine, teilbare Bausteine
       \end{itemize}
     \end{column}
-    \begin{column}{0.56\textwidth}
-      \warn{Offene Punkte (Roadmap)}
+    \begin{column}{0.5\textwidth}
+      \warn{Offene Punkte}
       \begin{itemize}
         \item \warn{Daten-/KI-Governance} explizit dokumentieren:
               was verlässt die Maschine, GDPR, no-training-Plan.
         \item \warn{Keine Evaluation}: ein gemessener
               ,,grounded vs.\ ungrounded``-Vergleich macht aus der
               Design-Behauptung Evidenz.
-        \item \warn{Naming-/Doku-Drift}: \code{\_TEMPLATES} vs.\
-              \code{\_PROJECT\_TEMPLATES}; \code{src/NewWandB} vs.\
-              \code{src/Template}.
-        \item \warn{Duplikation}: \code{read-package-a/b} + Copilot-Zwillinge
-              = 6 Dateien für 3 Logiken $\rightarrow$ parametrisieren.
-        \item \warn{Aufräumen}: \code{.claude/worktrees/} \& \code{temp.md}
-              nicht versionieren; toter \code{cpp\_referenz}-Pfad in
-              \code{settings.json}.
+        \item \warn{Wiki-Schiene noch nicht gebaut} --- siehe Ausblick.
+        \item \warn{Template-Deployment manuell} --- Vorlagen werden noch
+              per Hand in den Vault kopiert.
       \end{itemize}
     \end{column}
   \end{columns}
 \end{frame}
 
-% =====================================================================
 \section{Zusammenfassung}
-% =====================================================================
+
 \begin{frame}{Zusammenfassung}
   \begin{itemize}
     \item Nicht ,,mehr KI``, sondern \hl{disziplinierte KI}:
           Struktur + Rituale + Grounding.
-    \item \hl{Zwei Ebenen}: der Agent im Repo (Ausführung) und das
-          Wissenssystem auf dem Desktop (Strategie + Referenz).
-    \item \hl{Schreiben ist ein bewusster, bestätigter Akt} ---
-          der Vault bleibt vertrauenswürdig, der Chat bleibt frei.
-    \item Roadmap: \emph{Governance-Notiz + kleine Eval + Konsolidierung}
-          der Naming-/Doku-Drift.
+    \item \hl{Vault = persistentes Repository}, \hl{Chat = ephemerer
+          Brainstorm-Raum} --- bewusste Asymmetrie.
+    \item Vier Rituale halten beides synchron: \code{/push} (5 Schritte,
+          bestätigt), \code{/pull}-Familie (read-only), \code{/sync}
+          (Zotero), Drift-Check (zyklisch).
+    \item \hl{Dr.-Personas} für rollenbasierte Sessions, unabhängig vom
+          Vault.
+    \item Geplante Erweiterung: \code{og-wiki}-Schiene --- siehe Ausblick.
   \end{itemize}
   \vfill
   \begin{center}
-    {\large\color{hhnblue}\textbf{Fragen \& Diskussion}}\\[2pt]
-    {\footnotesize\color{darkgray} Zusammen mit Präsentation 1 (DevContainer)
-    ergibt sich die volle Forschungs-Infrastruktur.}
+    {\large\color{hhnblue}\textbf{Fragen \& Diskussion}}
   \end{center}
 \end{frame}
 
