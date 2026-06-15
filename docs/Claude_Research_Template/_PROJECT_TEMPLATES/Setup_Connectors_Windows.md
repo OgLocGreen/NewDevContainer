@@ -308,19 +308,60 @@ npm install -g obsidian-mcp-server
 
 ## 5. Configure Claude Desktop (both variants)
 
-### 5.1 Find the config file (MSIX path)
+### 5.1 Find the config file
+
+Claude Desktop stores its config in different locations depending on how it was installed.
+
+#### Step 1 — Search automatically (recommended)
 
 ```powershell
 Get-ChildItem "$env:APPDATA","$env:LOCALAPPDATA" -Filter "claude_desktop_config.json" -Recurse -ErrorAction SilentlyContinue
 ```
 
-Expected path on the MSIX (Store) version:
+This prints the full path. Use that path in all subsequent steps.
 
-```
-$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json
+#### Step 2 — Known paths by install type
+
+| Install type                  | Config path                                                                                           |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **MSIX / Microsoft Store**    | `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json`  |
+| **Classic installer (.exe)**  | `%APPDATA%\Claude\claude_desktop_config.json`                                                         |
+
+> **Which version do you have?** Open Claude Desktop → `Help → About`. If the version string ends with `(Store)` or you installed via the Microsoft Store, you have the MSIX version.
+
+#### Step 3 — Open the config file
+
+Open directly in Notepad:
+
+```powershell
+# MSIX version
+notepad "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json"
+
+# Classic installer version
+notepad "$env:APPDATA\Claude\claude_desktop_config.json"
 ```
 
-If the file does not exist, create it.
+Or open the containing folder in Windows Explorer to edit with any editor:
+
+```powershell
+# MSIX version
+explorer "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude"
+
+# Classic installer version
+explorer "$env:APPDATA\Claude"
+```
+
+#### Step 4 — Create the file if it does not exist
+
+If the file is missing, create it with an empty JSON object first:
+
+```powershell
+# MSIX version — create directory and file
+New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude" | Out-Null
+Set-Content -Encoding utf8 "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json" '{}'
+```
+
+Then open it and replace `{}` with the full JSON from Section 3.2 or 4.4.
 
 > **PowerShell quoting:** paths containing `$env:` must be in **double quotes**, e.g. `"$env:LOCALAPPDATA\Packages\..."`. Single quotes will not expand the variable.
 
