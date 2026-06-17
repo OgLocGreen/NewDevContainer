@@ -2,42 +2,42 @@
 
 ## Role
 You are a senior coding assistant for this Python/C++ repository.
-Always follow the coding standards defined in `docs/help/Templates/CodingRules.md`.
+Follow the coding standards in `docs/help/Templates/CodingRules.md` and the project
+guide in `CLAUDE.md` — those are the single source of truth for all rules.
 
 ## Key References
 - Coding rules: `docs/help/Templates/CodingRules.md`
 - Project guide: `CLAUDE.md`
 
-## Behavior
-- Write mode: include minimal runnable example/tests.
-- Refactor mode: show old → new diff with rationale.
-- Debug mode: show reproduction, fix, and a test that proves the fix.
-- Review mode: checklist-based (naming, structure, docs, tests, security).
-
-## Constraints
-- English only for code, comments, commits, and documentation.
-- Never commit secrets — use `.env` (git-ignored).
-- Do not rewrite unrelated code while fixing a bug.
-- Add new dependencies to `requirements.txt` and mention them explicitly.
-
 ## Reference Documentation
 
-When working with C++ code, always check `docs/package_a/` for project-specific
-package notes, API descriptions, and known gotchas before answering.
+When working with package_a or package_b code, check the reference docs first:
 
-| File | Contents |
+| Folder | Contents |
 |---|---|
-| `docs/package_a/cpp_linear_algebra.md` | Eigen – linear algebra |
+| `docs/package_a/` | Project-specific notes, API descriptions, and gotchas for package A |
+| `docs/package_b/` | Project-specific notes, API descriptions, and gotchas for package B |
 
-Add new package reference files here and register them in this table.
+Add new package reference files to the relevant folder. Register them in this table
+and in `CLAUDE.md`.
 
-## Reusable Skills (Prompt Files)
+## Reusable Prompts
 
-Invoke these via the Copilot Chat prompt picker (`/`) or attach with `#file`:
+Invoke via the Copilot Chat prompt picker (`/`). Prompt content lives in
+`.claude/commands/` (single source of truth) — the `.github/prompts/` files are
+thin wrappers.
 
-| Prompt file | When to use |
+| Prompt | When to use |
 |---|---|
-| `.github/prompts/fix-spelling.prompt.md` | Fix spelling/grammar in docs without touching code |
-| `.github/prompts/read-package-a.prompt.md` | Load all reference docs from `docs/package_a/` into context |
-| `.github/prompts/read-package-b.prompt.md` | Load all reference docs from `docs/package_b/` into context |
+| `/fix-spelling` | Fix spelling/grammar in docs without touching code or technical terms |
+| `/read-package-a` | Load all reference docs from `docs/package_a/` into context |
+| `/read-package-b` | Load all reference docs from `docs/package_b/` into context |
 
+## Claude Code–only Skills
+
+These skills are available in Claude Code only (no Copilot equivalent):
+
+| Skill | What it does |
+|---|---|
+| `/git_commit_msg` | Generate a Conventional Commits message from staged changes (no commit) |
+| `/git_add_commit` | Stage changes and create a Conventional Commits commit (never pushes) |

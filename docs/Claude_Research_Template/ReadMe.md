@@ -431,7 +431,6 @@ Verwendung: Inhalt kopieren, in ein Claude Project oder eine Custom-GPT-Konfigur
 docs/Claude_Research_Template/
 ├── ReadMe.md                          ← du bist hier (echte README, aktueller Stand)
 ├── ReadMe_Future.md                   ← Zukunftsbild mit Wiki-Schiene
-├── temp.md                            ← Arbeitsnotiz (kein Bestandteil)
 │
 ├── _PROJECT_TEMPLATES/                ← Vorlagen für neue Projekte
 │   ├── Setup_Guide.md                 ← Setup plattformübergreifend

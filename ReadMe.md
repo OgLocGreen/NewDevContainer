@@ -247,21 +247,24 @@ Both Copilot and Claude Code can load these on demand (see commands below).
 
 ### Reusable Skills / Commands
 
-**GitHub Copilot** — invoke via the `/` prompt picker in Copilot Chat:
+**Single source of truth:** prompt content lives in `.claude/commands/`. The
+`.github/prompts/` files are thin wrappers that include them — edit only the
+`.claude/commands/` files and both tools pick up the change automatically.
 
-| Skill             | File                                       | What it does                                                            |
-| ----------------- | ------------------------------------------ | ----------------------------------------------------------------------- |
-| `/fix-spelling`   | `.github/prompts/fix-spelling.prompt.md`   | Fixes spelling/grammar in docs without touching code or technical terms |
-| `/read-package-a` | `.github/prompts/read-package-a.prompt.md` | Loads all docs from `docs/package_a/` into the session context          |
-| `/read-package-b` | `.github/prompts/read-package-b.prompt.md` | Loads all docs from `docs/package_b/` into the session context          |
+**Shared prompts** — same commands, available in both tools:
 
-**Claude Code** — invoke via the `/` command picker in Claude Code chat:
+| Command (Claude Code) | Prompt (Copilot)        | Canonical file                        | What it does                                                            |
+| --------------------- | ----------------------- | ------------------------------------- | ----------------------------------------------------------------------- |
+| `/spell-check`        | `/fix-spelling`         | `.claude/commands/spell-check.md`     | Fixes spelling/grammar in docs without touching code or technical terms |
+| `/read-package-a`     | `/read-package-a`       | `.claude/commands/read-package-a.md`  | Loads all docs from `docs/package_a/` into the session context          |
+| `/read-package-b`     | `/read-package-b`       | `.claude/commands/read-package-b.md`  | Loads all docs from `docs/package_b/` into the session context          |
 
-| Command           | File                                 | What it does                                                            |
-| ----------------- | ------------------------------------ | ----------------------------------------------------------------------- |
-| `/spell-check`    | `.claude/commands/spell-check.md`    | Fixes spelling/grammar in docs without touching code or technical terms |
-| `/read-package-a` | `.claude/commands/read-package-a.md` | Loads all docs from `docs/package_a/` into the session context          |
-| `/read-package-b` | `.claude/commands/read-package-b.md` | Loads all docs from `docs/package_b/` into the session context          |
+**Claude Code–only skills** (no Copilot equivalent):
+
+| Command           | File                             | What it does                                                             |
+| ----------------- | -------------------------------- | ------------------------------------------------------------------------ |
+| `/git_commit_msg` | `.claude/skills/git_commit_msg/` | Generates a Conventional Commits message from staged changes — no commit |
+| `/git_add_commit` | `.claude/skills/git_add_commit/` | Stages changes and creates a Conventional Commits commit (never pushes)  |
 
 ### Adding a new package reference
 

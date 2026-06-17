@@ -11,7 +11,7 @@
 **Target system:** Windows, PowerShell, Claude Desktop MSIX
 **Example paths in this guide:** replace `YOUR_USERNAME` and `YOUR_VAULT_PATH` with your actual values.
 
-For the full workflow guide (sessions, `/push`, Dr. prompts, etc.), see [[Setup_Guide]].
+For the full workflow guide (sessions, `/push`, Dr. prompts, etc.), see [Setup_Guide](Setup_Guide.md).
 For other platforms, see [Section 9](#9-other-platforms-macos--linux).
 
 ---
@@ -318,47 +318,44 @@ Claude Desktop stores its config in different locations depending on how it was 
 Get-ChildItem "$env:APPDATA","$env:LOCALAPPDATA" -Filter "claude_desktop_config.json" -Recurse -ErrorAction SilentlyContinue
 ```
 
-This prints the full path. Use that path in all subsequent steps.
+This prints the full path. To reuse it in Steps 3 and 4, capture it in the same PowerShell session:
+
+```powershell
+$claudeConfig = (Get-ChildItem "$env:APPDATA","$env:LOCALAPPDATA" -Filter "claude_desktop_config.json" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
+```
 
 #### Step 2 — Known paths by install type
 
 | Install type                  | Config path                                                                                           |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **MSIX / Microsoft Store**    | `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json`  |
-| **Classic installer (.exe)**  | `%APPDATA%\Claude\claude_desktop_config.json`                                                         |
+| **MSIX / Microsoft Store**    | `$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json`  |
+| **Classic installer (.exe)**  | `$env:APPDATA\Claude\claude_desktop_config.json`                                                         |
 
 > **Which version do you have?** Open Claude Desktop → `Help → About`. If the version string ends with `(Store)` or you installed via the Microsoft Store, you have the MSIX version.
 
 #### Step 3 — Open the config file
 
-Open directly in Notepad:
+Using the `$claudeConfig` variable from Step 1:
 
 ```powershell
-# MSIX version
-notepad "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json"
-
-# Classic installer version
-notepad "$env:APPDATA\Claude\claude_desktop_config.json"
+notepad $claudeConfig
 ```
 
 Or open the containing folder in Windows Explorer to edit with any editor:
 
 ```powershell
-# MSIX version
-explorer "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude"
-
-# Classic installer version
-explorer "$env:APPDATA\Claude"
+explorer (Split-Path $claudeConfig)
 ```
 
 #### Step 4 — Create the file if it does not exist
 
-If the file is missing, create it with an empty JSON object first:
+If `$claudeConfig` is empty (Step 1 found nothing), create the file first:
 
 ```powershell
-# MSIX version — create directory and file
-New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude" | Out-Null
-Set-Content -Encoding utf8 "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json" '{}'
+# MSIX version — create directory and file (BOM-free UTF-8)
+$claudeDir = "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude"
+New-Item -ItemType Directory -Force $claudeDir | Out-Null
+[System.IO.File]::WriteAllText("$claudeDir\claude_desktop_config.json", '{}', [System.Text.UTF8Encoding]::new($false))
 ```
 
 Then open it and replace `{}` with the full JSON from Section 3.2 or 4.4.
