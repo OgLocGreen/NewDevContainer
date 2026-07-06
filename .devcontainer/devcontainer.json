@@ -13,33 +13,29 @@
         "terminal.integrated.defaultProfile.linux": "bash"
       },
       "extensions": [
-        "anthropic.claude-code",
-        "github.copilot",
-        "github.copilot-chat",
-        "analytic-signal.preview-pdf",
-        "cschlosser.doxdocgen",
-        "donjayamanne.githistory",
-        "github.codespaces",
-        "github.remotehub",
-        "github.vscode-pull-request-github",
-        "grapecity.gc-excelviewer",
-        "gruntfuggly.todo-tree",
-        "hediet.vscode-drawio",
-        "mechatroner.rainbow-csv",
-        "mhutchie.git-graph",
-        "ms-azuretools.vscode-docker",
-        "ms-ceintl.vscode-language-pack-de",
-        "ms-python.debugpy",
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "ms-toolsai.jupyter",
-        "ms-toolsai.jupyter-keymap",
-        "ms-toolsai.jupyter-renderers",
-        "ms-toolsai.vscode-jupyter-cell-tags",
-        "ms-toolsai.vscode-jupyter-slideshow",
-        "ms-vscode.azure-repos",
-        "ms-vscode.remote-repositories",
-        "percy.vscode-numpy-viewer"
+        "anthropic.claude-code", // Claude Code — VS Code integration for Anthropic's agent (CLI itself already provided by the claude-code feature above → partly redundant)
+        "github.copilot", // GitHub Copilot — inline AI code completions
+        "github.copilot-chat", // GitHub Copilot Chat — ask/edit chat panel for Copilot
+        "analytic-signal.preview-pdf", // PDF Preview (Analytic Signal) — renders .pdf files in an editor tab
+        "cschlosser.doxdocgen", // Doxygen Doc Generator — auto-creates Doxygen comment blocks for C/C++ (type /** above a function)
+        "donjayamanne.githistory", // Git History — view file/line history, diff commits, compare branches
+        "github.vscode-pull-request-github", // GitHub Pull Requests & Issues — review/create PRs and issues from the editor
+        "grapecity.gc-excelviewer", // Excel Viewer — read-only grid view for .csv / .xlsx / .xlsm
+        "gruntfuggly.todo-tree", // Todo Tree — collects TODO/FIXME/… tags into a tree view + highlights them in code
+        "hediet.vscode-drawio", // Draw.io Integration — edit .drawio / .drawio.svg diagrams inside VS Code
+        "mechatroner.rainbow-csv", // Rainbow CSV — colorizes CSV columns, align/lint, SQL-like queries (RBQL)
+        "mhutchie.git-graph", // Git Graph — visual branch/commit graph with actions (checkout, merge, rebase…)
+        "ms-azuretools.vscode-containers", // Container Tools — build/manage/debug Docker containers & images (current successor to the deprecated ms-azuretools.vscode-docker)
+        "ms-ceintl.vscode-language-pack-de", // German (de) UI pack — switches the entire VS Code UI to German for anyone opening this container
+        "ms-python.debugpy", // Python Debugger — debugpy backend for Python debugging
+        "ms-python.python", // Python — core language support (run, env select, lint hooks); pulls in Pylance + debugpy
+        "ms-python.vscode-pylance", // Pylance — fast Python language server (IntelliSense, type checking)
+        "ms-toolsai.jupyter", // Jupyter — run/edit .ipynb notebooks + interactive window
+        "ms-toolsai.jupyter-keymap", // Jupyter Keymap — classic Jupyter keyboard shortcuts in notebooks
+        "ms-toolsai.jupyter-renderers", // Jupyter Renderers — rich output (Plotly, Vega, images, …)
+        "ms-toolsai.vscode-jupyter-cell-tags", // Jupyter Cell Tags — add/edit cell tags in notebooks
+        "ms-toolsai.vscode-jupyter-slideshow", // Jupyter Slide Show — mark notebook cells as slides
+        "percy.vscode-numpy-viewer" // NumPy Viewer — inspect binary .npy / .npz arrays (shape + table view)
       ]
     }
   },
