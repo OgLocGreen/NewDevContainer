@@ -148,4 +148,22 @@ Suggest the relevant command proactively when it fits the task (e.g. suggest `/s
 - Do **not** rewrite unrelated code while fixing a bug – keep diffs small.
 - When unsure about business intent, ask instead of guessing.
 
+## Approvals, Licenses & API Costs
+
+Before acting, Claude Code (or any AI assistant) must pause and ask the developer
+in these cases:
+
+- **Licenses & terms — always ask first.** Never accept or confirm a license,
+  EULA, or terms of service on the developer's behalf (e.g. `sdkmanager
+  --licenses`, package or model licenses). Stop, explain what is being accepted
+  (cost? obligations? reversible?), and wait for explicit approval. Never
+  silently confirm "y".
+- **Acting in the developer's name — ask before.** The same applies to anything
+  done in the developer's name: permissions, account sign-ins/sign-ups, and any
+  legal or financial action. Ask first, even for standard terms.
+- **Cost-incurring API / token usage — flag it.** Whenever code generates tokens
+  or sends requests to a paid API (LLM calls, cloud services, metered endpoints)
+  that could incur cost, say so before running it: name the service, the rough
+  cost, and wait for the developer's OK.
+
 > Coding rules reference: @docs/help/Templates/CodingRules.md
